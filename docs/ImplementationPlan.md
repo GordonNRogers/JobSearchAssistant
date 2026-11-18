@@ -1,7 +1,7 @@
 # JobSearchAssistant Implementation Plan
 
-**Status:** Proposed sequence; no implementation work recorded  
-**Last updated:** 2026-11-17
+**Status:** Initial scaffold and environment verification complete; first product increment pending  
+**Last updated:** 2026-11-18
 
 ## Delivery rule
 
@@ -11,22 +11,31 @@ Job applications, networking, and interview preparation continue independently. 
 
 The first increment is intentionally a narrow vertical slice: capture a real posting, persist it locally, and retrieve it through a browser. Do not add AI or automation to make the first release feel more impressive.
 
-## Step 0 — Install and verify the development environment
+## Step 0 — Establish the application and development baseline
 
-- Install the .NET 11 SDK (baseline 11.0.100; use the latest available 11.0 servicing release).
-- Verify installation with `dotnet --list-sdks` and `dotnet --info`.
-- Confirm the installed Visual Studio version supports the .NET 11 SDK and ASP.NET Core 11 tooling; update Visual Studio if required.
-- Confirm the local development location and repository conventions.
-- Create the solution targeting `net11.0`.
-- Create a minimal ASP.NET Core Razor Pages application and automated test project.
-- Configure IIS Express as the Visual Studio development launch profile.
+### Completed and verified
+
+- Installed .NET SDK 11.0.100 and verified it with `dotnet --list-sdks` and `dotnet --version`.
+- Created `JobSearchAssistant.sln`.
+- Created the ASP.NET Core Razor Pages project `JobSearchAssistant.Web`, targeting `net11.0`.
+- Confirmed the solution contains the expected web project.
+- Built the solution successfully with `dotnet build .\JobSearchAssistant.sln`.
+- Started the application with the HTTPS project launch profile and confirmed the default page loads at the local development URL.
+- Committed the initial scaffold to `main` and pushed it to GitHub. The scaffold commit is `d942836`.
+
+The current launch profiles use `commandName: Project`; they run the ASP.NET Core application directly. IIS Express is not configured and is not a prerequisite.
+
+### Remaining foundation work
+
+- Confirm the installed Visual Studio version supports the .NET 11 SDK and ASP.NET Core 11 tooling, and verify build/debug from Visual Studio.
+- Add the automated test project.
 - Add EF Core 11 and the SQLite provider, with package/tool versions aligned at 11.0.x.
 - Create a repository-local `dotnet-ef` tool manifest and install the matching EF Core tools.
-- Confirm the app runs under IIS Express and, separately, can run under Kestrel bound to loopback.
+- Confirm the app can run locally through the normal development workflow after these dependencies are added.
 
 .NET 11 is STS, not LTS. The project deliberately targets it, so keep the SDK patched and plan an upgrade before the framework reaches end of support.
 
-**Exit condition:** The .NET 11 SDK is recognized, the IDE can build/debug the project, a clean build and test run are demonstrated, and the app opens locally in a browser. No installation or test result is assumed in advance.
+**Exit condition:** The .NET 11 SDK is recognized, the IDE can build/debug the project, a clean build and test run are demonstrated, EF Core/SQLite tooling is ready, and the app opens locally in a browser. The build and basic browser startup are already verified; the remaining items must not be marked complete until demonstrated.
 
 ## Step 1 — Build the first usable opportunity inbox
 
