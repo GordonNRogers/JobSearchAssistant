@@ -16,22 +16,22 @@ When creating a session title or description, begin with **JobSearchAssistant** 
 
 ## Project status
 
-**Planning and requirements established; implementation has not started.**
+**Initial ASP.NET Core scaffold committed; first product feature not yet implemented.**
 
-The initial delivery is deliberately narrow: a local job-opportunity inbox that lets a person capture a posting, preserve its original content, find it later, and detect duplicate URLs.
+The repository contains a .NET 11 Razor Pages application scaffold. The installed .NET 11 SDK, solution build, and basic local browser startup have been verified.
 
-## Initial technology direction
+The first delivery remains deliberately narrow: a local job-opportunity inbox that lets a person capture a posting, preserve its original content, find it later, and detect duplicate URLs.
 
-- .NET 11 and ASP.NET Core 11.
-- Razor Pages with server-rendered HTML.
-- C# throughout the application.
-- SQLite persistence through Entity Framework Core 11 Code First.
-- Source-controlled EF Core migrations.
-- IIS Express for Visual Studio development.
-- Intended production hosting: Kestrel as a Windows Service, bound to loopback only.
-- Windows as the initial supported operating environment.
+## Current implementation baseline
 
-.NET 11 is a Standard Term Support (STS) release, not an LTS release. The project deliberately targets .NET 11 and must keep its SDK and dependencies on supported servicing versions. Plan a framework upgrade before support ends.
+- Solution: `JobSearchAssistant.sln`.
+- Application project: `JobSearchAssistant.Web`.
+- Target framework: `.NET 11 (net11.0)`.
+- UI: ASP.NET Core Razor Pages with server-rendered HTML.
+- Language: C#.
+- Current launch profiles run the project directly; IIS Express is not configured.
+- The initial scaffold builds and runs locally.
+- EF Core, SQLite persistence, migrations, and automated tests have not yet been added.
 
 ## First usable increment
 
