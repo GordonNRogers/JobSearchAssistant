@@ -1,7 +1,7 @@
 # JobSearchAssistant Architecture
 
-**Status:** Initial architectural direction; implementation decisions remain subject to a working prototype  
-**Last updated:** 2026-11-17
+**Status:** Initial architecture established; scaffold committed, product implementation not yet started  
+**Last updated:** 2026-11-18
 
 ## 1. Architectural objective
 
@@ -11,23 +11,20 @@ Build a dependable local application that supports a personal job search. Keep i
 
 Use a **modular monolith**: one ASP.NET Core application and one local database, with clear internal responsibilities.
 
-Conceptual flow:
+Current scaffold and intended runtime:
 
 ```text
-Development                         Production
------------                         ----------
-Visual Studio                       Windows Service
+Development                         Intended production
+-----------                         -------------------
+Visual Studio / dotnet run          Windows Service
     |                                   |
     v                                   v
-IIS Express                         Kestrel (loopback only)
+ASP.NET Core / Razor Pages          Kestrel (loopback only)
     |                                   |
     +---------------+-------------------+
                     |
                     v
-          ASP.NET Core / Razor Pages
-                    |
-                    v
-            Application workflows
+          Application workflows
              +--> Job capture/validation
              +--> URL normalization/deduplication
              +--> Opportunity list/detail
@@ -39,6 +36,8 @@ IIS Express                         Kestrel (loopback only)
                SQLite database
           (stable ProgramData location)
 ```
+
+The current scaffold has one project, `JobSearchAssistant.Web`, with Razor Pages and direct project launch profiles. IIS Express is not configured and is not required for the initial development workflow.
 
 Later workflows can extend the application services without changing the local-first operating model:
 
@@ -61,7 +60,7 @@ These are logical responsibilities, not a mandate to create a separate project o
 - **SDK baseline:** .NET SDK 11.0.100 or a later 11.0 servicing release.
 - **Application framework:** ASP.NET Core 11.
 - **Initial UI:** Razor Pages with server-rendered HTML. It fits form-driven capture and review without requiring a separate frontend application.
-- **Development hosting:** IIS Express through Visual Studio.
+- **Development hosting:** ASP.NET Core project launch profiles, using Kestrel through Visual Studio or `dotnet run`. IIS Express may be added if a concrete need arises; it is not currently configured.
 - **Production hosting:** Kestrel hosted as a Windows Service, configured to bind only to loopback. No full IIS installation is required.
 - **Persistence:** SQLite in a stable machine-wide application-data location, separate from application binaries.
 - **ORM:** Entity Framework Core 11 Code First, using the Microsoft.EntityFrameworkCore.Sqlite provider.
@@ -73,16 +72,13 @@ These are logical responsibilities, not a mandate to create a separate project o
 
 The initial deployment is a locally run web application, not a cloud-hosted service. Do not bind to public network interfaces or configure external hosting for the first increment.
 
-## 4. Suggested solution organization
+## 4. Solution organization
 
-Start with a small solution. Avoid creating multiple class libraries before the code demonstrates a need.
+The current solution is deliberately small:
 
-Initial option:
+- **JobSearchAssistant.Web** — ASP.NET Core Razor Pages host. The first vertical slice can keep its application workflows, EF Core DbContext/configuration, and migrations in this project.
 
-- **JobSearchAssistant.App** — ASP.NET Core Razor Pages host, application workflows, EF Core DbContext/configuration, and migrations for the first vertical slice.
-- **JobSearchAssistant.Tests** — automated tests for URL normalization, validation, EF Core persistence, migrations, and duplicate handling.
-
-Keep the first implementation in a small solution. Do not create a separate data-access project just to house a DbContext.
+The current solution does not yet contain a test project. Add **JobSearchAssistant.Tests** when implementing the first product behavior so the new domain and persistence behavior can be tested. Do not create additional class libraries before the code demonstrates a need.
 
 Extract Domain, Application, or Infrastructure projects only when boundaries become useful and the additional project structure pays for itself. Keep business rules out of PageModel code where practical, but do not introduce layers solely to satisfy a template.
 
@@ -143,7 +139,7 @@ Do not make the model responsible for authoritative decisions or allow it to inv
 
 ### Persistence and schema evolution
 
-Use EF Core 11 Code First from the beginning. Define the domain/persistence model in C# entity types and a DbContext; use Fluent API configuration where it makes mapping and constraints explicit. Use the SQLite provider (`Microsoft.EntityFrameworkCore.Sqlite`).
+Use EF Core 11 Code First when persistence is introduced. Define the domain/persistence model in C# entity types and a DbContext; use Fluent API configuration where it makes mapping and constraints explicit. Use the SQLite provider (`Microsoft.EntityFrameworkCore.Sqlite`).
 
 - Treat source-controlled EF Core migrations as the authoritative schema history.
 - Create and test migrations during development; do not hand-edit the production database schema.
@@ -163,7 +159,7 @@ Record model identifier, prompt/schema version, and assessment timestamp. Treat 
 
 ### Hosting and deployment
 
-Development runs through IIS Express in Visual Studio. Production is a separately installed Kestrel Windows Service. The same application code and configuration model should support both hosts; hosting is an environment/deployment choice, not a separate application implementation.
+Development currently runs through the ASP.NET Core project launch profiles. Production is a separately installed Kestrel Windows Service. The same application code and configuration model should support both hosts; hosting is an environment/deployment choice, not a separate application implementation.
 
 Suggested production layout:
 
@@ -237,5 +233,3 @@ Do not add plugin discovery, event buses, generic workflow engines, distributed 
 - Background collection/scheduling.
 - AI provider and assessment contract.
 - More elaborate project/assembly separation.
-
-Revisit deferred decisions only when actual usage or a concrete requirement justifies them.
