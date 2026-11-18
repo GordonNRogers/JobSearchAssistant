@@ -4,6 +4,16 @@ JobSearchAssistant is a local-first application for collecting, organizing, eval
 
 Its purpose is to reduce repetitive job-search administration and help people make better-informed decisions about which opportunities deserve attention. It is designed as a practical personal tool, not as a public job board, recruiting marketplace, or autonomous application agent.
 
+## ChatGPT session identity
+
+Use this distinct identity when starting or describing a ChatGPT session for this repository:
+
+**JOBSEARCHASSISTANT — development of the personal job-search application**
+
+This project concerns the application itself: its requirements, C#/.NET implementation, user experience, persistence, testing, and practical job-search workflows. It is not the Local AI Development Playbook or its supporting tooling.
+
+When creating a session title or description, begin with **JobSearchAssistant** so it is distinguishable from the Local AI Development Playbook.
+
 ## Project status
 
 **Planning and requirements established; implementation has not started.**
