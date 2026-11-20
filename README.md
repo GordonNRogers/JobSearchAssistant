@@ -16,41 +16,46 @@ When creating a session title or description, begin with **JobSearchAssistant** 
 
 ## Project status
 
-**First usable opportunity-inbox implementation complete; final persistence acceptance check pending.**
+**Local opportunity inbox implemented and deployed as a Windows Service.**
 
-The .NET 11 Razor Pages application now supports manual opportunity capture, SQLite persistence through EF Core 11, a newest-first inbox, opportunity details, required-field validation, and duplicate URL warnings with explicit save confirmation.
+The application supports manual opportunity capture, SQLite persistence through EF Core 11, a newest-first inbox, opportunity details, required-field validation, duplicate URL warnings with explicit save confirmation, editable comments, and deletion of an opportunity.
 
-The solution builds successfully. The automated test suite currently passes all 10 tests. The local SQLite database has been created and its initial EF migration applied. The remaining first-increment acceptance check is to verify that saved opportunities survive an actual application shutdown and restart.
+The application is deployed locally at `http://127.0.0.1:5117/`. The Windows Service uses the persistent database at `C:\ProgramData\JobSearchAssistant\jobsearch.db`; application binaries are installed separately under `C:\Program Files\JobSearchAssistant`. The deployment script builds, tests, publishes, updates the service, and checks the HTTP health endpoint.
+
+Latest verified automated result: solution build succeeded and all 11 tests passed. The deployment completed successfully and its health check returned HTTP 200. The user confirmed the deployed application looks correct.
 
 ## Current implementation baseline
 
 - Solution: `JobSearchAssistant.sln`.
 - Application project: `JobSearchAssistant.Web`.
 - Test project: `JobSearchAssistant.Tests`.
-- Target framework: `.NET 11 (net11.0)`.
+- Target framework: .NET 11 (`net11.0`).
 - UI: ASP.NET Core Razor Pages with server-rendered HTML.
 - Language: C#.
 - Persistence: EF Core 11 with SQLite.
 - Schema management: source-controlled EF Core migrations.
-- Local database: `%LOCALAPPDATA%\JobSearchAssistant\jobsearch.db`.
-- Current development hosting: direct ASP.NET Core project launch; IIS Express is not configured.
-- Automated tests: xUnit and ASP.NET Core integration testing with an in-memory SQLite database.
-- Latest verified test result: 10 passed, 0 failed.
-- Production Windows Service hosting and `%ProgramData%` data storage remain future work.
+- Development database: `%LOCALAPPDATA%\JobSearchAssistant\jobsearch.db`.
+- Deployed database: `C:\ProgramData\JobSearchAssistant\jobsearch.db`.
+- Deployed application: `C:\Program Files\JobSearchAssistant`.
+- Hosting: Windows Service named `JobSearchAssistant`, running Kestrel on loopback only at `127.0.0.1:5117`.
+- Deployment entry point: `scripts\Deploy.ps1` (run from an elevated PowerShell session).
+- Automated tests: xUnit and ASP.NET Core integration testing with SQLite.
+- Latest verified test result: 11 passed, 0 failed.
 
-## First usable increment
-
-The first increment is a local opportunity inbox:
+## Current opportunity-inbox capabilities
 
 1. Manually capture a source URL and the complete original job-posting text.
-2. Allow employer and job title to be entered optionally.
+2. Enter employer and job title optionally.
 3. Record the capture timestamp automatically.
-4. Persist the opportunity in SQLite through EF Core.
-5. List saved opportunities, newest first.
+4. Persist opportunities in SQLite through EF Core.
+5. List saved opportunities newest first.
 6. Open an opportunity and review its original posting.
-7. Warn when the same normalized source URL is captured again.
+7. Warn when the same normalized source URL is captured again; allow explicit confirmation to save another record.
+8. Save one optional free-text comments field per opportunity without changing the original posting text.
+9. Delete an opportunity from its details page using a confirmed POST action.
+10. Deploy updates through the PowerShell deployment script without copying application files over the persistent ProgramData database.
 
-The first increment does not include AI evaluation, scraping, application tracking, dashboards, or automated application submission.
+The application does not yet include AI evaluation, scraping, application tracking, dashboards, or automated application submission.
 
 ## Documentation
 
