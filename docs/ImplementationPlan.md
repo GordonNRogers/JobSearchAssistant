@@ -1,7 +1,7 @@
 # JobSearchAssistant Implementation Plan
 
-**Status:** Initial scaffold and environment verification complete; first product increment pending  
-**Last updated:** 2026-11-18
+**Status:** Initial foundation and opportunity-inbox implementation delivered; final persistence acceptance check pending
+**Last updated:** 2026-11-19
 
 ## Delivery rule
 
@@ -28,14 +28,12 @@ The current launch profiles use `commandName: Project`; they run the ASP.NET Cor
 ### Remaining foundation work
 
 - Confirm the installed Visual Studio version supports the .NET 11 SDK and ASP.NET Core 11 tooling, and verify build/debug from Visual Studio.
-- Add the automated test project.
-- Add EF Core 11 and the SQLite provider, with package/tool versions aligned at 11.0.x.
-- Create a repository-local `dotnet-ef` tool manifest and install the matching EF Core tools.
-- Confirm the app can run locally through the normal development workflow after these dependencies are added.
+
+The solution build, automated test run, EF Core/SQLite integration, migration tooling, and local browser workflow have been verified.
 
 .NET 11 is STS, not LTS. The project deliberately targets it, so keep the SDK patched and plan an upgrade before the framework reaches end of support.
 
-**Exit condition:** The .NET 11 SDK is recognized, the IDE can build/debug the project, a clean build and test run are demonstrated, EF Core/SQLite tooling is ready, and the app opens locally in a browser. The build and basic browser startup are already verified; the remaining items must not be marked complete until demonstrated.
+**Exit condition:** The .NET 11 SDK is recognized, the solution builds and tests successfully, EF Core/SQLite tooling is ready, and the application opens locally in a browser. These conditions have been demonstrated. Visual Studio-specific build/debug verification remains optional environment confirmation.
 
 ## Step 1 — Build the first usable opportunity inbox
 
@@ -58,6 +56,25 @@ The current launch profiles use `commandName: Project`; they run the ASP.NET Cor
 - Normalize source URLs consistently and warn when the same normalized URL already exists.
 - Keep the database in a stable local application-data location, not the working directory by accident.
 
+### Implementation status
+
+Implemented:
+
+- `JobOpportunity` entity and EF Core `ApplicationDbContext`.
+- Initial source-controlled EF Core migration.
+- Local SQLite database initialization.
+- Opportunity capture form and validation.
+- Automatic UTC capture timestamp.
+- Newest-first inbox and opportunity details page.
+- Normalized URL duplicate warning with explicit confirmation.
+- xUnit integration tests using `WebApplicationFactory` and in-memory SQLite.
+
+Latest verified result: solution build succeeded and all 10 tests passed.
+
+### Remaining acceptance verification
+
+The actual local database has been created and the initial migration applied. However, the application shutdown/restart test has not yet been completed. Do not consider the first increment fully accepted until that test passes.
+
 ### First-increment acceptance test
 
 1. Start the application.
@@ -67,9 +84,9 @@ The current launch profiles use `commandName: Project`; they run the ASP.NET Cor
 5. Stop and restart the application.
 6. Confirm the opportunity remains available.
 7. Attempt to capture the same URL again and confirm a duplicate warning is shown.
-8. Delete only the disposable test database, recreate it from the initial migration, and confirm the inbox works against the freshly migrated schema.
+8. Delete only the separate disposable test database, not %LOCALAPPDATA%\JobSearchAssistant\jobsearch.db, recreate it from the initial migration, and confirm the inbox works against the freshly migrated schema.
 
-**Exit condition:** The user can capture, close, reopen, find, and review real postings without losing source information or creating unnoticed same-URL duplicates.
+**Exit condition:** The user can capture, close, reopen, find, and review real postings without losing source information or creating unnoticed same-URL duplicates. The implementation and automated tests are in place. The actual application shutdown/restart verification remains outstanding.
 
 Do not include AI evaluation, scraping, application status, dashboards, or follow-up tracking in this increment.
 

@@ -1,4 +1,18 @@
+using JobSearchAssistant.Web.Data;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
+
+var dataDirectory = Path.Combine(
+    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+    "JobSearchAssistant");
+
+Directory.CreateDirectory(dataDirectory);
+
+var databasePath = Path.Combine(dataDirectory, "jobsearch.db");
+
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlite($"Data Source={databasePath}"));
 
 // Add services to the container.
 builder.Services.AddRazorPages();
@@ -24,3 +38,5 @@ app.MapRazorPages()
    .WithStaticAssets();
 
 app.Run();
+
+public partial class Program { }

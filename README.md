@@ -16,22 +16,27 @@ When creating a session title or description, begin with **JobSearchAssistant** 
 
 ## Project status
 
-**Initial ASP.NET Core scaffold committed; first product feature not yet implemented.**
+**First usable opportunity-inbox implementation complete; final persistence acceptance check pending.**
 
-The repository contains a .NET 11 Razor Pages application scaffold. The installed .NET 11 SDK, solution build, and basic local browser startup have been verified.
+The .NET 11 Razor Pages application now supports manual opportunity capture, SQLite persistence through EF Core 11, a newest-first inbox, opportunity details, required-field validation, and duplicate URL warnings with explicit save confirmation.
 
-The first delivery remains deliberately narrow: a local job-opportunity inbox that lets a person capture a posting, preserve its original content, find it later, and detect duplicate URLs.
+The solution builds successfully. The automated test suite currently passes all 10 tests. The local SQLite database has been created and its initial EF migration applied. The remaining first-increment acceptance check is to verify that saved opportunities survive an actual application shutdown and restart.
 
 ## Current implementation baseline
 
 - Solution: `JobSearchAssistant.sln`.
 - Application project: `JobSearchAssistant.Web`.
+- Test project: `JobSearchAssistant.Tests`.
 - Target framework: `.NET 11 (net11.0)`.
 - UI: ASP.NET Core Razor Pages with server-rendered HTML.
 - Language: C#.
-- Current launch profiles run the project directly; IIS Express is not configured.
-- The initial scaffold builds and runs locally.
-- EF Core, SQLite persistence, migrations, and automated tests have not yet been added.
+- Persistence: EF Core 11 with SQLite.
+- Schema management: source-controlled EF Core migrations.
+- Local database: `%LOCALAPPDATA%\JobSearchAssistant\jobsearch.db`.
+- Current development hosting: direct ASP.NET Core project launch; IIS Express is not configured.
+- Automated tests: xUnit and ASP.NET Core integration testing with an in-memory SQLite database.
+- Latest verified test result: 10 passed, 0 failed.
+- Production Windows Service hosting and `%ProgramData%` data storage remain future work.
 
 ## First usable increment
 

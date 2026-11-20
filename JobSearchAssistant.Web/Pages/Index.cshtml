@@ -1,10 +1,73 @@
 ﻿@page
-@model IndexModel
+@model JobSearchAssistant.Web.Pages.IndexModel
 @{
-    ViewData["Title"] = "Home page";
+    ViewData["Title"] = "Opportunity Inbox";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Opportunity Inbox</h1>
+    <a asp-page="/Opportunities/Create" class="btn btn-primary">
+        Capture Opportunity
+    </a>
 </div>
+
+@if (Model.Opportunities.Count == 0)
+{
+    <div class="alert alert-info">
+        No opportunities have been captured yet.
+        Use <strong>Capture Opportunity</strong> to add your first one.
+    </div>
+}
+else
+{
+    <p class="text-muted">
+        @Model.Opportunities.Count saved opportunity(ies)
+    </p>
+
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead>
+                <tr>
+                    <th>Company</th>
+                    <th>Job Title</th>
+                    <th>Captured</th>
+                    <th>Source</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var opportunity in Model.Opportunities)
+                {
+                    <tr>
+                        <td>
+                            @(string.IsNullOrWhiteSpace(opportunity.CompanyName)
+                                ? "Not specified"
+                                : opportunity.CompanyName)
+                        </td>
+                        <td>
+                            @(string.IsNullOrWhiteSpace(opportunity.JobTitle)
+                                ? "Not specified"
+                                : opportunity.JobTitle)
+                        </td>
+                        <td>
+                            @opportunity.CapturedAtUtc.ToLocalTime().ToString("g")
+                        </td>
+                        <td>
+                            <a href="@opportunity.SourceUrl"
+                               target="_blank"
+                               rel="noopener noreferrer">
+                                Open source
+                            </a>
+                        </td>
+                        <td>
+                            <a asp-page="/Opportunities/Details"
+                               asp-route-id="@opportunity.Id">
+                                View details
+                            </a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}

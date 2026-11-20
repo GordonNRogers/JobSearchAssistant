@@ -1,7 +1,7 @@
 # JobSearchAssistant Architecture
 
-**Status:** Initial architecture established; scaffold committed, product implementation not yet started  
-**Last updated:** 2026-11-18
+**Status:** First opportunity-inbox vertical slice implemented; production hosting and final persistence verification remain outstanding
+**Last updated:** 2026-11-19
 
 ## 1. Architectural objective
 
@@ -34,8 +34,13 @@ ASP.NET Core / Razor Pages          Kestrel (loopback only)
                     |
                     v
                SQLite database
-          (stable ProgramData location)
+          (%LOCALAPPDATA%\JobSearchAssistant)
 ```
+The current development database is stored at:
+
+`%LOCALAPPDATA%\JobSearchAssistant\jobsearch.db`
+
+This is the implemented development location, not the intended production location. Production deployment is expected to use `%ProgramData%\JobSearchAssistant` so application binaries and persistent user data remain separate.
 
 The current scaffold has one project, `JobSearchAssistant.Web`, with Razor Pages and direct project launch profiles. IIS Express is not configured and is not required for the initial development workflow.
 
@@ -78,8 +83,12 @@ The current solution is deliberately small:
 
 - **JobSearchAssistant.Web** — ASP.NET Core Razor Pages host. The first vertical slice can keep its application workflows, EF Core DbContext/configuration, and migrations in this project.
 
-The current solution does not yet contain a test project. Add **JobSearchAssistant.Tests** when implementing the first product behavior so the new domain and persistence behavior can be tested. Do not create additional class libraries before the code demonstrates a need.
+The solution currently contains two projects:
 
+- **JobSearchAssistant.Web** — ASP.NET Core Razor Pages host, application workflows, EF Core DbContext, SQLite configuration, entity model, and migrations.
+- **JobSearchAssistant.Tests** — xUnit test project using `Microsoft.AspNetCore.Mvc.Testing` and an in-memory SQLite database for integration testing.
+
+No additional class libraries have been introduced. Keep the current structure until actual complexity justifies further separation.
 Extract Domain, Application, or Infrastructure projects only when boundaries become useful and the additional project structure pays for itself. Keep business rules out of PageModel code where practical, but do not introduce layers solely to satisfy a template.
 
 ## 5. Core concepts
@@ -118,6 +127,21 @@ A captured opportunity is not automatically an application. Multiple source URLs
 - Warn when a matching normalized URL already exists.
 - Do not silently create a duplicate or destructively merge records.
 - Cross-URL similarity detection is deferred until there is a real sample of captured postings to test against.
+
+### Implemented behavior
+
+The first opportunity-inbox vertical slice currently includes:
+
+- `JobOpportunity` entity with source URL, optional company and title, original posting text, and UTC capture timestamp.
+- `ApplicationDbContext` with an EF Core SQLite configuration.
+- Initial source-controlled migration, successfully applied to the local development database.
+- Capture page with required-field validation and optional metadata.
+- Duplicate URL detection that canonicalizes scheme and host, removes fragments, and trims trailing path slashes. Path and query casing are preserved.
+- Explicit user confirmation before saving a possible duplicate.
+- Newest-first inbox and individual opportunity detail page.
+- Not-found response for nonexistent opportunity IDs.
+
+The implementation does not yet include cross-URL similarity detection or destructive duplicate merging.
 
 ## 7. Important boundaries and future capabilities
 
@@ -198,16 +222,26 @@ Production deployment automation is not part of the first opportunity-inbox incr
 
 ## 9. Testing strategy
 
-First-increment tests should cover:
+The current automated test suite uses xUnit, `WebApplicationFactory`, and an in-memory SQLite database. It currently passes 10 tests with no failures.
 
-- Required-field validation and optional employer/title.
-- URL normalization and duplicate detection.
-- Preservation of original source URL and posting text.
-- EF Core SQLite persistence and retrieval across application restarts.
-- Initial migration creates the expected schema on a clean database.
-- A subsequent migration upgrades a copy of the prior schema without losing existing opportunity records.
-- Production migration procedure takes a backup before modifying the database.
-- List ordering and detail retrieval.
+Implemented test coverage includes:
+
+- Empty inbox display.
+- Valid opportunity capture and persistence within the test database.
+- Invalid URL validation.
+- Missing original posting text validation.
+- Duplicate URL warning and refusal to save without confirmation.
+- Explicit duplicate confirmation and saving.
+- Preservation of path-case distinctions during URL comparison.
+- Opportunity detail retrieval and original posting text display.
+- Newest-first inbox ordering.
+
+The test factory applies EF Core migrations to its in-memory SQLite database. This verifies migration-based initialization and database operations in the integration-test environment. It does not verify persistence across separate production application restarts.
+
+Remaining first-increment verification:
+
+- Stop and restart the actual application and confirm a saved opportunity remains available in the local SQLite file.
+- Confirm a clean local database can be initialized from the committed migration.
 
 Use deterministic fixtures. The initial test suite must not depend on a live model or external job site.
 

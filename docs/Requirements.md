@@ -1,7 +1,7 @@
 # JobSearchAssistant Requirements
 
-**Status:** Initial requirements baseline; first product increment not yet implemented  
-**Last updated:** 2026-11-18  
+**Status:** First opportunity-inbox implementation delivered; application restart acceptance check pending
+**Last updated:** 2026-11-19
 **Primary objective:** Make a personal job search more efficient and better informed.
 
 ## 1. Problem statement
@@ -29,14 +29,15 @@ The initial target is an individual's local workflow. This is not initially inte
 - Preferred implementation ecosystem: C#/.NET, Visual Studio, and SQL.
 - **Target framework:** .NET 11 (`net11.0`).
 - **SDK:** .NET 11 SDK, baseline 11.0.100. SDK 11.0.100 is installed and has been verified.
-- Initial persistence: SQLite, accessed through Entity Framework Core 11 Code First. EF Core and SQLite have not yet been added to the scaffold.
-- Schema evolution: source-controlled EF Core migrations.
+- Initial persistence: SQLite, accessed through Entity Framework Core 11 Code First. Implemented.
+- Schema evolution: source-controlled EF Core migrations. Initial migration generated and applied.
+- Re-entering an equivalent normalized source URL produces a clear duplicate warning. The user can explicitly confirm saving another record.
 - Initial user interface: ASP.NET Core Razor Pages, rendered on the server.
 - Current development hosting: ASP.NET Core project launch profiles using direct project launch. IIS Express is not currently configured.
 - Intended production hosting: Kestrel as a Windows Service, bound to loopback and accessible only from the local machine.
 - No initial requirement for multi-user access, public hosting, or mobile support.
 
-The current repository scaffold consists of `JobSearchAssistant.sln` and one ASP.NET Core project, `JobSearchAssistant.Web`. The solution build and basic local browser startup have been verified. Product functionality, persistence, and automated tests remain to be implemented.
+The repository contains the ASP.NET Core application project `JobSearchAssistant.Web` and the automated test project `JobSearchAssistant.Tests`. The application implements the first opportunity-inbox workflow using EF Core 11 and SQLite. The local database is stored at `%LOCALAPPDATA%\JobSearchAssistant\jobsearch.db`. The solution build and automated test suite have been verified successfully. Manual verification of persistence across an actual application restart remains outstanding.
 
 .NET 11 and EF Core 11 are Standard Term Support (STS), not Long Term Support (LTS). The project accepts the shorter support lifecycle in exchange for targeting the current releases. Keep the SDK and EF packages on supported servicing versions and plan an upgrade before support ends. Confirm the installed Visual Studio version supports the .NET 11 SDK and tooling.
 
@@ -56,11 +57,9 @@ The system records where the posting came from and when it was captured. It must
 - Capture time is recorded automatically.
 - Saved opportunities can be listed and opened individually.
 - The list is ordered newest first.
-- Re-entering the same normalized source URL produces a clear duplicate warning rather than an unnoticed second record.
+- Re-entering an equivalent normalized source URL produces a clear duplicate warning. The user can explicitly confirm saving another record.
 - Invalid or incomplete input produces actionable validation feedback.
 - The application can be closed and reopened without losing saved opportunities.
-
-The first increment is a capture-and-review inbox. It does not include application status or imply that a saved opportunity has been applied to.
 
 ### WF-02 — Normalize and deduplicate
 
@@ -168,6 +167,8 @@ Do not infer sensitive personal characteristics. Do not store confidential infor
 4. EF Core 11 Code First model and SQLite persistence, with an initial migration.
 5. Newest-first opportunity list and detail view.
 6. Duplicate URL warning.
+
+**Implementation status:** The capture, persistence, list, detail, validation, and duplicate-warning functionality has been implemented. Automated integration tests pass. Actual application shutdown/restart persistence verification remains outstanding.
 
 ### MVP — useful personal workflow
 
