@@ -1,7 +1,7 @@
 # JobSearchAssistant Implementation Plan
 
-**Status:** Initial foundation and opportunity-inbox implementation delivered; final persistence acceptance check pending
-**Last updated:** 2026-11-19
+**Status:** Initial opportunity-inbox increment implemented; local Windows Service deployment operational
+**Last updated:** 2026-11-20
 
 ## Delivery rule
 
@@ -9,90 +9,72 @@ Build the smallest increment that produces a useful job-search outcome. Use the 
 
 Job applications, networking, and interview preparation continue independently. If development begins consuming time without improving the job search, reduce or pause it.
 
-The first increment is intentionally a narrow vertical slice: capture a real posting, persist it locally, and retrieve it through a browser. Do not add AI or automation to make the first release feel more impressive.
-
 ## Step 0 — Establish the application and development baseline
 
-### Completed and verified
+### Completed
 
-- Installed .NET SDK 11.0.100 and verified it with `dotnet --list-sdks` and `dotnet --version`.
 - Created `JobSearchAssistant.sln`.
 - Created the ASP.NET Core Razor Pages project `JobSearchAssistant.Web`, targeting `net11.0`.
-- Confirmed the solution contains the expected web project.
-- Built the solution successfully with `dotnet build .\JobSearchAssistant.sln`.
-- Started the application with the HTTPS project launch profile and confirmed the default page loads at the local development URL.
-- Committed the initial scaffold to `main` and pushed it to GitHub. The scaffold commit is `d942836`.
-
-The current launch profiles use `commandName: Project`; they run the ASP.NET Core application directly. IIS Express is not configured and is not a prerequisite.
-
-### Remaining foundation work
-
-- Confirm the installed Visual Studio version supports the .NET 11 SDK and ASP.NET Core 11 tooling, and verify build/debug from Visual Studio.
-
-The solution build, automated test run, EF Core/SQLite integration, migration tooling, and local browser workflow have been verified.
-
-.NET 11 is STS, not LTS. The project deliberately targets it, so keep the SDK patched and plan an upgrade before the framework reaches end of support.
-
-**Exit condition:** The .NET 11 SDK is recognized, the solution builds and tests successfully, EF Core/SQLite tooling is ready, and the application opens locally in a browser. These conditions have been demonstrated. Visual Studio-specific build/debug verification remains optional environment confirmation.
+- Established direct project launch profiles for development.
+- Added EF Core 11 and SQLite persistence with source-controlled migrations.
+- Added `JobSearchAssistant.Tests` for automated integration testing.
+- Added `JobSearchAssistant.DatabaseTool` for SQLite backup, restore, and integrity verification.
 
 ## Step 1 — Build the first usable opportunity inbox
 
-### Capture form
-
-- Accept a source URL and complete original job-description text.
-- Accept employer and job title as optional manual fields.
-- Record capture timestamp automatically.
-- Validate required fields and show useful errors.
-- Preserve the original URL and posting text.
-
-### Persistence and review
-
-- Define the initial `JobOpportunity` entity and EF Core `DbContext`.
-- Create the initial source-controlled EF Core migration.
-- Initialize the local SQLite database by applying that migration.
-- Save captured opportunities through EF Core.
-- List saved opportunities newest first.
-- Open a detail page showing the original posting and source metadata.
-- Normalize source URLs consistently and warn when the same normalized URL already exists.
-- Keep the database in a stable local application-data location, not the working directory by accident.
-
-### Implementation status
-
-Implemented:
+### Implemented
 
 - `JobOpportunity` entity and EF Core `ApplicationDbContext`.
-- Initial source-controlled EF Core migration.
+- Source-controlled EF Core migrations.
 - Local SQLite database initialization.
-- Opportunity capture form and validation.
+- Opportunity capture form with required-field validation and optional employer/title.
 - Automatic UTC capture timestamp.
-- Newest-first inbox and opportunity details page.
+- Newest-first inbox and opportunity detail page.
 - Normalized URL duplicate warning with explicit confirmation.
-- xUnit integration tests using `WebApplicationFactory` and in-memory SQLite.
+- Save and update opportunity comments.
+- Delete opportunity with confirmation.
+- xUnit integration tests using SQLite.
 
-Latest verified result: solution build succeeded and all 10 tests passed.
+### Acceptance status
 
-### Remaining acceptance verification
+The implemented workflow supports capture, persistence, listing, detail review, duplicate handling, comments, and deletion. The current automated test suite passes 11 tests.
 
-The actual local database has been created and the initial migration applied. However, the application shutdown/restart test has not yet been completed. Do not consider the first increment fully accepted until that test passes.
+The earlier first-increment restart check is superseded by the operational deployment: the application is running as a Windows Service against the persistent `%ProgramData%` database. The latest deployment completed and passed its HTTP health check. This verifies that deployment/startup succeeded; it is not a substitute for a separately documented data-retention test across a deliberate service restart with a known production record.
 
-### First-increment acceptance test
+## Step 2 — Establish repeatable local deployment and database recovery
 
-1. Start the application.
-2. Capture a real job posting copied from a job board.
-3. Confirm it appears in the opportunity list.
-4. Open it and verify the original URL and complete posting text are intact.
-5. Stop and restart the application.
-6. Confirm the opportunity remains available.
-7. Attempt to capture the same URL again and confirm a duplicate warning is shown.
-8. Delete only the separate disposable test database, not %LOCALAPPDATA%\JobSearchAssistant\jobsearch.db, recreate it from the initial migration, and confirm the inbox works against the freshly migrated schema.
+### Implemented
 
-**Exit condition:** The user can capture, close, reopen, find, and review real postings without losing source information or creating unnoticed same-URL duplicates. The implementation and automated tests are in place. The actual application shutdown/restart verification remains outstanding.
+- Windows Service named `JobSearchAssistant`.
+- Kestrel bound to loopback at `http://127.0.0.1:5117/`.
+- Application binaries installed under `%ProgramFiles%\JobSearchAssistant`.
+- Persistent SQLite database stored under `%ProgramData%\JobSearchAssistant`.
+- `scripts\Deploy.ps1` builds, tests, publishes, backs up application files, stops and updates the service, and performs a post-deployment health check.
+- `JobSearchAssistant.DatabaseTool` provides SQLite backup, restore, and integrity verification.
+- Deployment creates a timestamped, integrity-checked database backup before updating an existing installation.
+- Deployment contains a rollback path for restoring the database and previous application files if deployment fails.
 
-Do not include AI evaluation, scraping, application status, dashboards, or follow-up tracking in this increment.
+### Verified
 
-## Step 2 — Improve normalization and duplicate review
+- Release solution build succeeded with 0 errors.
+- All 11 automated tests passed.
+- `Deploy.ps1` PowerShell syntax check passed.
+- A deployment completed successfully.
+- The production database backup was created and passed `PRAGMA integrity_check`.
+- The service restarted and the HTTP health check passed.
+- DatabaseTool backup/restore was tested independently with a disposable database; restored data was verified.
 
-- Normalize URL variations.
+### Not yet verified
+
+- The complete deployment rollback path has not been failure-injection-tested.
+- A formal disaster-recovery exercise using a production backup has not been performed.
+- Backup retention and cleanup policy has not been defined.
+
+Do not deliberately break the live installation to test rollback. If rollback testing is pursued, use a disposable service installation and database.
+
+## Step 3 — Improve normalization and duplicate review
+
+- Normalize URL variations consistently.
 - Extract or accept employer, title, location, work arrangement, salary, and dates when available.
 - Identify likely duplicates across different URLs using conservative deterministic signals.
 - Surface uncertain duplicates for human review.
@@ -100,7 +82,7 @@ Do not include AI evaluation, scraping, application status, dashboards, or follo
 
 **Exit condition:** Re-importing a posting does not create an unnoticed duplicate, and distinct requisitions are not automatically merged.
 
-## Step 3 — Add candidate profile and useful filtering
+## Step 4 — Add candidate profile and useful filtering
 
 - Record user-approved experience, skills, accomplishments, preferences, and exclusions.
 - Implement deterministic filters for explicit constraints.
@@ -109,7 +91,7 @@ Do not include AI evaluation, scraping, application status, dashboards, or follo
 
 **Exit condition:** The user can identify a manageable shortlist without AI.
 
-## Step 4 — Add application tracking and reporting
+## Step 5 — Add application tracking and reporting
 
 - Create application records separately from captured opportunities.
 - Track status, dates, contacts, notes, and follow-up actions.
@@ -117,7 +99,7 @@ Do not include AI evaluation, scraping, application status, dashboards, or follo
 
 **Exit condition:** The tool can support the actual application pipeline and identify the next actions.
 
-## Step 5 — Evaluate local AI assistance
+## Step 6 — Evaluate local AI assistance
 
 Only proceed after capture, profile data, and deterministic behavior are dependable.
 
@@ -129,7 +111,7 @@ Only proceed after capture, profile data, and deterministic behavior are dependa
 
 **Exit condition:** AI saves review time without materially increasing false matches, invented qualifications, or missed disqualifiers. Otherwise retain deterministic filtering and defer AI.
 
-## Step 6 — Add collection automation selectively
+## Step 7 — Add collection automation selectively
 
 - Review actual job-alert sources in use.
 - Prefer supported APIs, RSS, email alerts, or user-provided exports.
@@ -138,20 +120,6 @@ Only proceed after capture, profile data, and deterministic behavior are dependa
 - Respect terms, rate limits, and access controls.
 
 **Exit condition:** An integration demonstrably saves time or improves coverage enough to justify maintenance.
-
-## Step 7 — Prepare a stable production installation
-
-Do this after the core application is useful and reliable; it is not a prerequisite for the first increment.
-
-- Publish a release separately from the development output.
-- Install the application as a Windows Service hosting Kestrel, bound to loopback only.
-- Keep releases/configuration separate from the persistent SQLite database under `%ProgramData%\JobSearchAssistant`.
-- Configure service startup, restart/recovery behavior, and logging.
-- Define a deployment procedure: stop service, back up database, apply the release's EF migration bundle or reviewed SQL script, switch/install the application release, then start and smoke-test the service.
-- Retain the previous binary release and document database restore requirements. Do not assume binary rollback reverses a database migration.
-- Test an upgrade using a copy of a database containing representative opportunity records; verify records survive.
-
-**Exit condition:** A fresh install and an upgrade both work; application replacement does not overwrite user data; the service starts automatically and remains local-only; and a tested backup/restore path exists.
 
 ## Stop / defer conditions
 

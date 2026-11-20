@@ -92,7 +92,18 @@ static void Restore(string backupPath, string targetPath)
         Verify(temporaryPath);
 
         // Replace the target only after the restored database passes integrity_check.
-        File.Move(temporaryPath, targetPath, overwrite: true);
+        if (File.Exists(targetPath))
+        {
+            File.Replace(temporaryPath, targetPath, destinationBackupFileName: null);
+        }
+        else
+        {
+            File.Move(temporaryPath, targetPath);
+        }
+
+        // The service must be stopped. Remove sidecars belonging to the old database.
+        File.Delete(targetPath + "-wal");
+        File.Delete(targetPath + "-shm");
 
         Console.WriteLine($"Database restored and verified: {targetPath}");
     }

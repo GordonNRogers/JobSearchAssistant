@@ -1,269 +1,188 @@
 # JobSearchAssistant Architecture
 
-**Status:** First opportunity-inbox vertical slice implemented; production hosting and final persistence verification remain outstanding
-**Last updated:** 2026-11-19
+**Status:** Opportunity inbox implemented and deployed as a local Windows Service
+**Last updated:** 2026-11-20
 
 ## 1. Architectural objective
 
-Build a dependable local application that supports a personal job search. Keep it straightforward to operate and maintain. Preserve a few boundaries that make likely extensions inexpensive, but do not build speculative infrastructure.
+Build a dependable local application that supports a personal job search. Keep it straightforward to operate and maintain. Preserve only the boundaries that make likely extensions inexpensive; do not build speculative infrastructure.
 
-## 2. Initial shape
+## 2. System shape
 
-Use a **modular monolith**: one ASP.NET Core application and one local database, with clear internal responsibilities.
-
-Current scaffold and intended runtime:
+The application is a modular monolith: one ASP.NET Core application and one local SQLite database, with a separate command-line utility for database backup, restore, and integrity verification.
 
 ```text
-Development                         Intended production
------------                         -------------------
-Visual Studio / dotnet run          Windows Service
-    |                                   |
-    v                                   v
-ASP.NET Core / Razor Pages          Kestrel (loopback only)
-    |                                   |
-    +---------------+-------------------+
-                    |
-                    v
-          Application workflows
-             +--> Job capture/validation
-             +--> URL normalization/deduplication
-             +--> Opportunity list/detail
-                    |
-                    v
-             EF Core 11 DbContext
-                    |
-                    v
-               SQLite database
-          (%LOCALAPPDATA%\JobSearchAssistant)
-```
-The current development database is stored at:
-
-`%LOCALAPPDATA%\JobSearchAssistant\jobsearch.db`
-
-This is the implemented development location, not the intended production location. Production deployment is expected to use `%ProgramData%\JobSearchAssistant` so application binaries and persistent user data remain separate.
-
-The current scaffold has one project, `JobSearchAssistant.Web`, with Razor Pages and direct project launch profiles. IIS Express is not configured and is not required for the initial development workflow.
-
-Later workflows can extend the application services without changing the local-first operating model:
-
-```text
-Application workflows
-    +--> Candidate profile and preferences
-    +--> Deterministic evaluation
-    +--> Optional AI-assisted assessment (Ollama)
-    +--> Application and follow-up tracking
-    +--> Reporting/export
+Browser (same machine)
     |
-    +--> Optional permitted job-source adapters
+    | http://127.0.0.1:5117/
+    v
+Windows Service: JobSearchAssistant (LocalService)
+    |
+    v
+ASP.NET Core / Kestrel / Razor Pages
+    |
+    v
+Application workflows and EF Core 11
+    |
+    v
+SQLite: %ProgramData%\JobSearchAssistant\jobsearch.db
+
+Deployment script
+    +--> build, test, publish
+    +--> stop service
+    +--> DatabaseTool backup + integrity check
+    +--> replace installed application files
+    +--> start service + HTTP health check
+    +--> rollback path on deployment failure
 ```
 
-These are logical responsibilities, not a mandate to create a separate project or assembly for every box.
+Development uses ASP.NET Core project launch profiles and a local development database under `%LOCALAPPDATA%\JobSearchAssistant\jobsearch.db`. Production uses `%ProgramData%\JobSearchAssistant\jobsearch.db`, separate from installed binaries.
 
 ## 3. Technology choices
 
 - **Target framework:** .NET 11 (`net11.0`).
-- **SDK baseline:** .NET SDK 11.0.100 or a later 11.0 servicing release.
 - **Application framework:** ASP.NET Core 11.
-- **Initial UI:** Razor Pages with server-rendered HTML. It fits form-driven capture and review without requiring a separate frontend application.
-- **Development hosting:** ASP.NET Core project launch profiles, using Kestrel through Visual Studio or `dotnet run`. IIS Express may be added if a concrete need arises; it is not currently configured.
-- **Production hosting:** Kestrel hosted as a Windows Service, configured to bind only to loopback. No full IIS installation is required.
-- **Persistence:** SQLite in a stable machine-wide application-data location, separate from application binaries.
-- **ORM:** Entity Framework Core 11 Code First, using the Microsoft.EntityFrameworkCore.Sqlite provider.
-- **Schema evolution:** EF Core migrations are committed to source control and define the database schema over time.
-- **Styling:** Bootstrap or minimal CSS; no frontend framework is required.
-- **Development:** C#/.NET and Visual Studio on Windows.
+- **UI:** Razor Pages with server-rendered HTML.
+- **Development hosting:** Direct ASP.NET Core project launch through Visual Studio or `dotnet run`.
+- **Production hosting:** Kestrel hosted as a Windows Service.
+- **Network binding:** Loopback only; service URL `http://127.0.0.1:5117/`.
+- **Persistence:** SQLite.
+- **ORM:** Entity Framework Core 11 with the SQLite provider.
+- **Schema evolution:** Source-controlled EF Core migrations.
+- **Database utility:** `Microsoft.Data.Sqlite` command-line project using SQLite backup facilities and `PRAGMA integrity_check`.
+- **Tests:** xUnit and ASP.NET Core integration testing.
 
-.NET 11 is a Standard Term Support (STS) release rather than an LTS release. This project deliberately targets the current release; keep the SDK on a supported servicing update and plan the next framework upgrade before .NET 11 support ends. Confirm the installed Visual Studio version supports the .NET 11 SDK and tooling.
-
-The initial deployment is a locally run web application, not a cloud-hosted service. Do not bind to public network interfaces or configure external hosting for the first increment.
+.NET 11 is an STS release. Keep the SDK and packages on supported servicing versions and plan a framework upgrade before support ends.
 
 ## 4. Solution organization
 
-The current solution is deliberately small:
-
-- **JobSearchAssistant.Web** — ASP.NET Core Razor Pages host. The first vertical slice can keep its application workflows, EF Core DbContext/configuration, and migrations in this project.
-
-The solution currently contains two projects:
+The solution contains three projects:
 
 - **JobSearchAssistant.Web** — ASP.NET Core Razor Pages host, application workflows, EF Core DbContext, SQLite configuration, entity model, and migrations.
-- **JobSearchAssistant.Tests** — xUnit test project using `Microsoft.AspNetCore.Mvc.Testing` and an in-memory SQLite database for integration testing.
+- **JobSearchAssistant.Tests** — xUnit tests, including ASP.NET Core integration tests using SQLite.
+- **JobSearchAssistant.DatabaseTool** — command-line backup, restore, and integrity-check utility.
 
-No additional class libraries have been introduced. Keep the current structure until actual complexity justifies further separation.
-Extract Domain, Application, or Infrastructure projects only when boundaries become useful and the additional project structure pays for itself. Keep business rules out of PageModel code where practical, but do not introduce layers solely to satisfy a template.
+The structure remains deliberately small. Do not extract additional class libraries until actual complexity justifies them.
 
-## 5. Core concepts
+## 5. Current domain and workflows
 
-Initial domain concept:
+`JobOpportunity` represents one captured job posting. It includes the source URL, optional company and title, original posting text, capture timestamp, and optional user comments.
 
-- **JobOpportunity** — one distinct employer requisition or role posting, including manually supplied details, original posting text, source URL, and capture metadata.
+Implemented workflows:
 
-Later concepts, when their workflows are implemented:
+- Manual capture with required-field validation.
+- Duplicate URL detection and explicit confirmation before saving a possible duplicate.
+- Newest-first inbox and opportunity detail view.
+- Save/update comments.
+- Delete an opportunity with confirmation.
 
-- **CandidateProfile** — user-approved experience, skills, accomplishments, and preferences.
-- **JobAssessment** — a versioned evaluation of a specific opportunity against a specific profile version.
-- **ApplicationRecord** — the user's pursuit of an opportunity, with status, dates, contacts, notes, and follow-ups.
+A captured opportunity is not automatically an application. Application tracking remains a future capability.
 
-A captured opportunity is not automatically an application. Multiple source URLs may refer to the same opportunity, so source references should not be confused with the opportunity's identity.
+## 6. Persistence and schema evolution
 
-## 6. First-increment behavior
+- EF Core 11 Code First migrations are the authoritative, source-controlled schema history.
+- The application applies pending migrations through `db.Database.Migrate()` during startup, including Windows Service startup.
+- The production database is `%ProgramData%\JobSearchAssistant\jobsearch.db`.
+- The service runs as `LocalService`; deployment setup grants the service identity the required access to the data directory.
+- Application binaries are installed under `%ProgramFiles%\JobSearchAssistant`, separate from persistent data.
+- Do not replace or delete the production database as part of an ordinary application update.
 
-### Capture
+A database schema change can make a binary-only rollback insufficient. The deployment script therefore creates a pre-deployment database backup and includes a restore path if deployment fails. The restore path requires the service to be stopped and no other database connections to remain open.
 
-- Accept a source URL and complete original job-description text.
-- Employer and job title are optional manual fields.
-- Record capture time automatically.
-- Preserve the submitted URL and original text; do not silently rewrite the source content.
-- Validate required fields and show actionable validation feedback.
+## 7. DatabaseTool
 
-### Review
+Project: `JobSearchAssistant.DatabaseTool`
 
-- List saved opportunities newest first.
-- Provide a detail page that displays the original URL, capture time, optional employer/title, and full posting text.
-- Allow the user to return to the list without losing data.
-
-### Duplicate handling
-
-- Normalize the source URL consistently before comparing it.
-- Warn when a matching normalized URL already exists.
-- Do not silently create a duplicate or destructively merge records.
-- Cross-URL similarity detection is deferred until there is a real sample of captured postings to test against.
-
-### Implemented behavior
-
-The first opportunity-inbox vertical slice currently includes:
-
-- `JobOpportunity` entity with source URL, optional company and title, original posting text, and UTC capture timestamp.
-- `ApplicationDbContext` with an EF Core SQLite configuration.
-- Initial source-controlled migration, successfully applied to the local development database.
-- Capture page with required-field validation and optional metadata.
-- Duplicate URL detection that canonicalizes scheme and host, removes fragments, and trims trailing path slashes. Path and query casing are preserved.
-- Explicit user confirmation before saving a possible duplicate.
-- Newest-first inbox and individual opportunity detail page.
-- Not-found response for nonexistent opportunity IDs.
-
-The implementation does not yet include cross-URL similarity detection or destructive duplicate merging.
-
-## 7. Important boundaries and future capabilities
-
-### Source acquisition
-
-The first implementation is manual capture. Later sources may include saved email alerts, RSS, supported APIs, and user-supplied files. Add one source adapter at a time and respect source terms, access restrictions, and rate limits. Avoid designing a generic scraping framework.
-
-### Evaluation
-
-When evaluation is introduced, separate deterministic checks from AI interpretation.
-
-- Deterministic logic handles explicit user constraints, known fields, status, filtering, and duplicate candidates.
-- AI may interpret unstructured descriptions, classify requirements, and map them to profile evidence.
-- The evaluation contract should return structured findings, evidence references or excerpts, uncertainty/unknowns, and evaluator metadata.
-- The application validates AI output before persistence.
-- The user can inspect and override findings.
-
-Do not make the model responsible for authoritative decisions or allow it to invent profile facts.
-
-### Persistence and schema evolution
-
-Use EF Core 11 Code First when persistence is introduced. Define the domain/persistence model in C# entity types and a DbContext; use Fluent API configuration where it makes mapping and constraints explicit. Use the SQLite provider (`Microsoft.EntityFrameworkCore.Sqlite`).
-
-- Treat source-controlled EF Core migrations as the authoritative schema history.
-- Create and test migrations during development; do not hand-edit the production database schema.
-- Keep EF Core runtime, SQLite provider, Design package, and tooling on compatible matching 11.0.x versions. Pin the `dotnet-ef` tool in a repository-local tool manifest so developers and build environments use a known version.
-- Keep database access behind application-level workflows; Razor PageModels should not become the place for complex queries or persistence policy.
-- Store the production database outside the release directory, under a stable `%ProgramData%\JobSearchAssistant\Data` location. Keep backups separately under `%ProgramData%\JobSearchAssistant\Backups`.
-- Back up the SQLite database before applying a production migration. Stop the Windows Service before backup/migration when required to ensure a consistent upgrade window.
-- Prefer a reviewed migration bundle or reviewed SQL script for production schema updates. Do not rely on automatic `Database.Migrate()` at every production startup.
-- Test upgrades against a copy of the current database. A binary rollback does not automatically reverse a schema migration; restore the pre-upgrade backup if a migration must be rolled back.
-- Do not introduce a remote database or synchronization service without a demonstrated requirement.
-
-### Local AI
-
-Ollama is an optional local provider, not a dependency of core workflows. Put it behind an evaluation interface so the rest of the application remains useful when the model is unavailable, slow, or produces invalid output.
-
-Record model identifier, prompt/schema version, and assessment timestamp. Treat model output as untrusted input and validate it.
-
-### Hosting and deployment
-
-Development currently runs through the ASP.NET Core project launch profiles. Production is a separately installed Kestrel Windows Service. The same application code and configuration model should support both hosts; hosting is an environment/deployment choice, not a separate application implementation.
-
-Suggested production layout:
+Commands:
 
 ```text
-C:\Program Files\JobSearchAssistant\
-    Releases\<version>\       # immutable published application releases
-    Current\                    # active release, if using a stable indirection
-
-C:\ProgramData\JobSearchAssistant\
-    appsettings.Production.json
-    Data\JobSearchAssistant.db
-    Backups\
-    Logs\
+backup <source.db> <backup.db>
+restore <backup.db> <target.db>
+verify <database.db>
 ```
 
-The exact installer and release-switching mechanism can be chosen later. Requirements for any deployment mechanism:
+Behavior:
 
-- Application releases and user data are physically separate.
-- Production binds only to loopback; do not expose the app to the LAN or internet.
-- Install/update must not overwrite the database or production configuration.
-- Take and verify a database backup before applying migrations.
-- Apply the release's EF migration bundle or reviewed migration script as a deliberate deployment step, then start the new service version.
-- Retain the previous application release for binary rollback. If the database schema has already advanced, use a tested reverse migration or restore the pre-upgrade database backup; do not assume swapping binaries is sufficient.
-- Service startup/recovery behavior and logs should be configured and tested before calling the installation production-ready.
+- `backup` uses SQLite's backup API rather than copying a potentially active database file.
+- `verify` runs `PRAGMA integrity_check`.
+- `restore` writes to a temporary database in the target directory, closes the database connections, verifies the temporary database, and replaces the target.
+- Database connections disable pooling so handles are released before replacement.
+- Restore is an offline operation. Stop the Windows Service and ensure no other process has the database open before running it.
+- The deployment script stores timestamped backups under `%ProgramData%\JobSearchAssistant\Backups`.
 
-Production deployment automation is not part of the first opportunity-inbox increment.
+The utility's backup/restore flow was tested independently against a disposable database, including verification of a restored record.
 
-## 8. Initial data integrity rules
+## 8. Hosting and deployment
 
-- Preserve original posting text and source URL alongside normalized fields.
-- Keep unknown values unknown; do not manufacture salary, dates, employer details, or requirements.
-- Distinguish the job posting's lifecycle from the user's application lifecycle.
-- Avoid destructive duplicate merging without user review.
-- Tie future assessments to the profile and evaluation version used to produce them.
-- Retain a clear audit trail for future user overrides and important status changes.
+### Installed layout
 
-## 9. Testing strategy
+```text
+%ProgramFiles%\JobSearchAssistant\
+    JobSearchAssistant.Web.exe
+    ...published application files...
 
-The current automated test suite uses xUnit, `WebApplicationFactory`, and an in-memory SQLite database. It currently passes 10 tests with no failures.
+%ProgramData%\JobSearchAssistant\
+    jobsearch.db
+    Backups\
+        jobsearch-<timestamp>.db
+```
 
-Implemented test coverage includes:
+The Windows Service is named `JobSearchAssistant`, runs as `LocalService`, and serves the application at `http://127.0.0.1:5117/`.
 
-- Empty inbox display.
-- Valid opportunity capture and persistence within the test database.
-- Invalid URL validation.
-- Missing original posting text validation.
-- Duplicate URL warning and refusal to save without confirmation.
-- Explicit duplicate confirmation and saving.
-- Preservation of path-case distinctions during URL comparison.
-- Opportunity detail retrieval and original posting text display.
-- Newest-first inbox ordering.
+### Deployment script
 
-The test factory applies EF Core migrations to its in-memory SQLite database. This verifies migration-based initialization and database operations in the integration-test environment. It does not verify persistence across separate production application restarts.
+`scripts\Deploy.ps1` is the deployment entry point. It requires an elevated PowerShell session.
 
-Remaining first-increment verification:
+The implemented deployment sequence:
 
-- Stop and restart the actual application and confirm a saved opportunity remains available in the local SQLite file.
-- Confirm a clean local database can be initialized from the committed migration.
+1. Validate the repository and deployment prerequisites.
+2. Build the solution and run automated tests.
+3. Build `JobSearchAssistant.DatabaseTool`.
+4. Publish the web application.
+5. Back up the currently installed application files.
+6. Stop the Windows Service.
+7. Create a SQLite backup when a production database exists; verify the backup with `PRAGMA integrity_check`.
+8. Copy published application files into the installation directory.
+9. Start the service.
+10. Check service state, loopback listener, and HTTP response.
 
-Use deterministic fixtures. The initial test suite must not depend on a live model or external job site.
+The first-install path creates the service and data directories and configures the service account's data-directory access. A first install has no existing database to back up.
 
-As later capabilities are added, test profile evidence mapping, structured AI response validation, application status transitions, follow-up calculations, and core workflows when Ollama is unavailable.
+### Rollback
 
-## 10. Extension points worth preserving
+If deployment fails after the service has been stopped, the script attempts to stop the service, restore the pre-deployment database backup when one was created, restore the previous application files, restart the service, and verify health. If rollback cannot be completed, the service is left stopped rather than intentionally starting an unverified combination.
 
-Preserve only these initial seams:
+The normal deployment and successful backup/health-check path have been exercised. The complete failure-triggered rollback sequence has **not** been tested through deliberate failure injection. Do not describe rollback as proven until it has been safely tested against a disposable installation and database.
 
-1. Job-source acquisition can grow without changing core job records.
-2. Evaluation providers can change without changing application workflows.
-3. Persistence can be isolated from UI workflows as the application grows.
-4. Razor Pages can evolve without moving business rules into PageModel code.
+## 9. Testing and verification
 
-Do not add plugin discovery, event buses, generic workflow engines, distributed messaging, or multi-agent orchestration unless actual requirements emerge.
+The current automated test suite uses xUnit and ASP.NET Core integration testing with SQLite. The latest recorded run passed 11 tests with no failures.
 
-## 11. Decisions deliberately deferred
+The latest recorded operational verification also includes:
 
-- Authentication and multi-user access (not required for local single-user use).
-- Installer/updater implementation and exact production release-switching mechanism.
-- Remote hosting, LAN access, or cloud synchronization.
-- First email or job-board source integration.
-- Background collection/scheduling.
-- AI provider and assessment contract.
-- More elaborate project/assembly separation.
+- Release solution build succeeded with 0 errors.
+- PowerShell parser check passed for `scripts\Deploy.ps1`.
+- Deployment completed successfully.
+- Timestamped SQLite backup passed the integrity check.
+- Windows Service restarted and HTTP health check passed.
+- DatabaseTool backup/restore independently passed a disposable-database test with restored-record verification.
+
+These checks do not establish that the combined deployment rollback path has been failure-tested.
+
+## 10. Future capabilities and boundaries
+
+Potential future workflows include candidate profile management, deterministic evaluation, optional local Ollama-assisted assessment, application tracking, reporting/export, and permitted source adapters.
+
+Keep deterministic rules authoritative for explicit constraints and known data. Treat AI output as untrusted, validate it, retain evidence and evaluator metadata, and keep the user responsible for consequential decisions.
+
+Do not add scraping frameworks, plugin discovery, event buses, distributed messaging, multi-agent orchestration, or remote services without a demonstrated requirement.
+
+## 11. Decisions still deferred
+
+- Candidate profile and preference editing workflow.
+- Cross-URL similarity detection.
+- Application tracking and follow-up workflow.
+- First email, RSS, or job-source integration.
+- Optional AI assessment contract and provider.
+- Backup retention policy and a safely tested disaster-recovery procedure.
+- Authentication or multi-user access, if the single-user local model changes.

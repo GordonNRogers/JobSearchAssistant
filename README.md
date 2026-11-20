@@ -1,62 +1,117 @@
 # JobSearchAssistant
 
-JobSearchAssistant is a local-first application for collecting, organizing, evaluating, and tracking job opportunities.
+JobSearchAssistant is a local-first application for collecting, organizing, evaluating, and tracking job opportunities. Its purpose is to reduce repetitive job-search administration and help make better-informed decisions about which opportunities deserve attention.
 
-Its purpose is to reduce repetitive job-search administration and help people make better-informed decisions about which opportunities deserve attention. It is designed as a practical personal tool, not as a public job board, recruiting marketplace, or autonomous application agent.
+It is a practical personal tool, not a public job board, recruiting marketplace, or autonomous application agent.
 
 ## ChatGPT session identity
 
-Use this distinct identity when starting or describing a ChatGPT session for this repository:
-
-**JOBSEARCHASSISTANT — development of the personal job-search application**
-
-This project concerns the application itself: its requirements, C#/.NET implementation, user experience, persistence, testing, and practical job-search workflows. It is not the Local AI Development Playbook or its supporting tooling.
-
-When creating a session title or description, begin with **JobSearchAssistant** so it is distinguishable from the Local AI Development Playbook.
+Use **JobSearchAssistant** when starting or describing a ChatGPT session for this repository. This project concerns the application itself: requirements, C#/.NET implementation, user experience, persistence, testing, deployment, and practical job-search workflows. It is separate from the Local AI Development Playbook.
 
 ## Project status
 
-**First usable opportunity-inbox implementation complete; final persistence acceptance check pending.**
+**Usable local opportunity inbox deployed as a Windows Service.**
 
-The .NET 11 Razor Pages application now supports manual opportunity capture, SQLite persistence through EF Core 11, a newest-first inbox, opportunity details, required-field validation, and duplicate URL warnings with explicit save confirmation.
+The .NET 11 Razor Pages application supports manual opportunity capture, SQLite persistence through EF Core 11, a newest-first inbox, opportunity details, required-field validation, duplicate URL warnings with explicit save confirmation, user comments, and opportunity deletion.
 
-The solution builds successfully. The automated test suite currently passes all 10 tests. The local SQLite database has been created and its initial EF migration applied. The remaining first-increment acceptance check is to verify that saved opportunities survive an actual application shutdown and restart.
+The application is deployed as a Windows Service and listens on loopback at `http://127.0.0.1:5117/`. Its production database is stored separately from application binaries under `%ProgramData%\JobSearchAssistant`.
+
+The deployment process builds and tests the solution, publishes the web application, stops the service, creates and integrity-checks a SQLite backup, replaces application files, restarts the service, and performs an HTTP health check. A rollback path is implemented, but the complete failure-triggered rollback sequence has not been tested by deliberately failing a live deployment.
 
 ## Current implementation baseline
 
 - Solution: `JobSearchAssistant.sln`.
-- Application project: `JobSearchAssistant.Web`.
-- Test project: `JobSearchAssistant.Tests`.
-- Target framework: `.NET 11 (net11.0)`.
+- Web application: `JobSearchAssistant.Web`.
+- Automated tests: `JobSearchAssistant.Tests`.
+- SQLite utility: `JobSearchAssistant.DatabaseTool`.
+- Target framework: .NET 11 (`net11.0`).
 - UI: ASP.NET Core Razor Pages with server-rendered HTML.
 - Language: C#.
-- Persistence: EF Core 11 with SQLite.
-- Schema management: source-controlled EF Core migrations.
-- Local database: `%LOCALAPPDATA%\JobSearchAssistant\jobsearch.db`.
-- Current development hosting: direct ASP.NET Core project launch; IIS Express is not configured.
-- Automated tests: xUnit and ASP.NET Core integration testing with an in-memory SQLite database.
-- Latest verified test result: 10 passed, 0 failed.
-- Production Windows Service hosting and `%ProgramData%` data storage remain future work.
+- Persistence: EF Core 11 with SQLite and source-controlled migrations.
+- Production hosting: Kestrel hosted as a Windows Service.
+- Service URL: `http://127.0.0.1:5117/`.
+- Installed application: `%ProgramFiles%\JobSearchAssistant`.
+- Production database: `%ProgramData%\JobSearchAssistant\jobsearch.db`.
+- Database backups: `%ProgramData%\JobSearchAssistant\Backups`.
+- Service identity: `LocalService`.
+- Automated tests: xUnit and ASP.NET Core integration testing with SQLite.
 
-## First usable increment
+## Opportunity inbox
 
-The first increment is a local opportunity inbox:
+The implemented workflow supports:
 
 1. Manually capture a source URL and the complete original job-posting text.
-2. Allow employer and job title to be entered optionally.
+2. Optionally enter employer and job title.
 3. Record the capture timestamp automatically.
 4. Persist the opportunity in SQLite through EF Core.
-5. List saved opportunities, newest first.
+5. List saved opportunities newest first.
 6. Open an opportunity and review its original posting.
-7. Warn when the same normalized source URL is captured again.
+7. Warn when the same normalized source URL is captured again; require explicit confirmation to save a possible duplicate.
+8. Add and save comments on an opportunity.
+9. Delete an opportunity with an explicit confirmation step.
 
-The first increment does not include AI evaluation, scraping, application tracking, dashboards, or automated application submission.
+AI evaluation, scraping, application tracking, dashboards, and automated application submission are not implemented.
+
+## Build, test, and deployment
+
+From the repository root:
+
+```powershell
+dotnet build .\JobSearchAssistant.sln --configuration Release
+dotnet test .\JobSearchAssistant.sln --configuration Release --no-build
+```
+
+Deploy or update the Windows Service from an elevated PowerShell session:
+
+```powershell
+.\scripts\Deploy.ps1
+```
+
+Use `-Install` for first-time installation:
+
+```powershell
+.\scripts\Deploy.ps1 -Install
+```
+
+The deployment script builds the solution, runs tests, builds the database utility, publishes the web application, backs up the existing application files, stops the service, creates a verified database backup when a database exists, installs the published files, starts the service, and checks the HTTP endpoint.
+
+### SQLite DatabaseTool
+
+`JobSearchAssistant.DatabaseTool` provides:
+
+```powershell
+dotnet run --project .\JobSearchAssistant.DatabaseTool -- backup <source.db> <backup.db>
+dotnet run --project .\JobSearchAssistant.DatabaseTool -- restore <backup.db> <target.db>
+dotnet run --project .\JobSearchAssistant.DatabaseTool -- verify <database.db>
+```
+
+The utility uses SQLite's online backup API and runs `PRAGMA integrity_check`. Restore stages the database in a temporary file, verifies it, and then replaces the target. Stop the application/service and ensure no other process has the database open before restoring it.
+
+Deployment database backups are timestamped and stored under:
+
+`%ProgramData%\JobSearchAssistant\Backups`
+
+Do not delete the only known-good backup until a newer backup has been verified and the retention policy is understood.
+
+## Latest recorded verification
+
+The latest results supplied for this documentation update:
+
+- Release solution build succeeded with 0 errors.
+- Automated tests: 11 passed, 0 failed.
+- `scripts\Deploy.ps1` PowerShell parser check passed.
+- Deployment completed successfully.
+- SQLite backup completed and passed the integrity check.
+- Windows Service restarted and the HTTP health check passed.
+- DatabaseTool backup/restore was tested independently using a disposable database, and the restored record was verified.
+
+These results describe the recorded verification run; rerun the commands above after subsequent changes.
 
 ## Documentation
 
 - [Requirements](docs/Requirements.md) — product needs, workflows, scope, and acceptance criteria.
-- [Architecture](docs/Architecture.md) — technical direction, boundaries, persistence, and hosting.
-- [Implementation Plan](docs/ImplementationPlan.md) — incremental delivery sequence and exit conditions.
+- [Architecture](docs/Architecture.md) — technical structure, persistence, hosting, backup, and deployment.
+- [Implementation Plan](docs/ImplementationPlan.md) — delivered increments, remaining work, and exit conditions.
 
 ## Guiding principles
 

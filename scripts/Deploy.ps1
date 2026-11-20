@@ -20,11 +20,14 @@ $DatabaseBackupDir = Join-Path $DataDir "Backups"
 $ServiceUrl = "http://127.0.0.1:5117/"
 $ProjectFile = "JobSearchAssistant.Web\JobSearchAssistant.Web.csproj"
 $SolutionFile = "JobSearchAssistant.sln"
+$DatabaseToolProject = "JobSearchAssistant.DatabaseTool\JobSearchAssistant.DatabaseTool.csproj"
+$DatabaseBackupPath = $null
 
 $RepoRoot = Split-Path -Parent $PSScriptRoot
 $DeployRoot = Join-Path $RepoRoot ".deploy"
 $PublishDir = Join-Path $DeployRoot "publish"
 $BackupDir = Join-Path $DeployRoot "backup"
+$DatabaseToolDll = Join-Path $RepoRoot "JobSearchAssistant.DatabaseTool\bin\$Configuration\net11.0\JobSearchAssistant.DatabaseTool.dll"
 
 function Invoke-CheckedCommand {
     param(
@@ -75,43 +78,26 @@ function Backup-Database {
         throw "Database not found: $DatabasePath. Refusing to deploy without a database backup."
     }
 
+    New-Item -ItemType Directory -Force $DatabaseBackupDir | Out-Null
+
     $timestamp = Get-Date -Format "yyyyMMdd-HHmmss-fff"
-    $backupPath = Join-Path $DatabaseBackupDir $timestamp
+    $backupPath = Join-Path $DatabaseBackupDir "jobsearch-$timestamp.db"
 
-    try {
-        New-Item -ItemType Directory -Force $backupPath | Out-Null
+    Invoke-CheckedCommand "dotnet" @(
+        "exec",
+        $DatabaseToolDll,
+        "backup",
+        $DatabasePath,
+        $backupPath
+    )
 
-        $filesToBackup = @(
-            $DatabasePath,
-            "$DatabasePath-wal",
-            "$DatabasePath-shm"
-        )
-
-        foreach ($file in $filesToBackup) {
-            if (Test-Path $file -PathType Leaf) {
-                $destination = Join-Path $backupPath (Split-Path $file -Leaf)
-
-                Copy-Item -LiteralPath $file -Destination $destination
-
-                $sourceHash = (Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash
-                $backupHash = (Get-FileHash -LiteralPath $destination -Algorithm SHA256).Hash
-
-                if ($sourceHash -ne $backupHash) {
-                    throw "Database backup verification failed: $file"
-                }
-            }
-        }
-
-        if (-not (Test-Path (Join-Path $backupPath "jobsearch.db") -PathType Leaf)) {
-            throw "Database backup is missing the main database file."
-        }
-
-        Write-Host "Database backup verified: $backupPath" -ForegroundColor Green
+    if (-not (Test-Path $backupPath -PathType Leaf)) {
+        throw "Database backup tool reported success, but the backup file was not found: $backupPath"
     }
-    catch {
-        Remove-Item -LiteralPath $backupPath -Recurse -Force -ErrorAction SilentlyContinue
-        throw
-    }
+
+    $script:DatabaseBackupPath = $backupPath
+
+    Write-Host "Database backup verified: $backupPath" -ForegroundColor Green
 }
 
 function Test-DeploymentHealth {
@@ -172,6 +158,16 @@ try {
         "--configuration", $Configuration,
         "--no-build"
     )
+
+    Write-Host "`nBuilding database utility..." -ForegroundColor Cyan
+    Invoke-CheckedCommand "dotnet" @(
+        "build", $DatabaseToolProject,
+        "--configuration", $Configuration
+    )
+
+    if (-not (Test-Path $DatabaseToolDll -PathType Leaf)) {
+        throw "Database utility was not built: $DatabaseToolDll"
+    }
 
     # Prepare a clean staging directory.
     Write-Host "`nPublishing application..." -ForegroundColor Cyan
@@ -286,28 +282,89 @@ try {
     }
     finally {
         if (-not $deploymentSucceeded -and $serviceStopped) {
-            Write-Warning "Deployment failed. Attempting to restore the previous application."
+            Write-Warning "Deployment failed. Attempting to restore the previous application and database."
 
-            if ($hadExistingInstall -and (Test-Path $BackupDir)) {
-                Stop-Service -Name $ServiceName -Force -ErrorAction SilentlyContinue
+            $rollbackSuccessful = $true
 
-                & robocopy.exe $BackupDir $InstallDir /MIR /R:2 /W:2 /NFL /NDL /NP
-                if ($LASTEXITCODE -ge 8) {
-                    Write-Warning "Rollback file copy failed. Robocopy exit code: $LASTEXITCODE"
+            if (-not $hadExistingInstall) {
+                Write-Warning "No previous application installation exists. Automatic rollback is not possible."
+                $rollbackSuccessful = $false
+            }
+
+            # Ensure the application is stopped before touching its database.
+            try {
+                $service = Get-Service -Name $ServiceName -ErrorAction SilentlyContinue
+
+                if ($service -and $service.Status -ne "Stopped") {
+                    Stop-Service -Name $ServiceName -Force
+                    Wait-ForService -Status "Stopped"
+                }
+            }
+            catch {
+                Write-Warning "Could not stop the service for rollback: $_"
+                $rollbackSuccessful = $false
+            }
+
+            # Restore the pre-deployment database before restarting the old application.
+            if ($rollbackSuccessful -and $DatabaseBackupPath) {
+                try {
+                    Write-Host "`nRestoring database backup..." -ForegroundColor Cyan
+
+                    Invoke-CheckedCommand "dotnet" @(
+                        "exec",
+                        $DatabaseToolDll,
+                        "restore",
+                        $DatabaseBackupPath,
+                        $DatabasePath
+                    )
+                }
+                catch {
+                    Write-Warning "Database rollback failed: $_"
+                    $rollbackSuccessful = $false
                 }
             }
 
-            Start-Service -Name $ServiceName -ErrorAction SilentlyContinue
+            # Restore the previous application binaries.
+            if ($rollbackSuccessful -and $hadExistingInstall -and (Test-Path $BackupDir)) {
+                try {
+                    Write-Host "`nRestoring previous application files..." -ForegroundColor Cyan
 
-            try {
-                Wait-ForService -Status "Running" -TimeoutSeconds 30
-                Test-DeploymentHealth
-                Write-Warning "Previous application is running again."
+                    & robocopy.exe $BackupDir $InstallDir /MIR /R:2 /W:2 /NFL /NDL /NP
+
+                    if ($LASTEXITCODE -ge 8) {
+                        throw "Robocopy exit code: $LASTEXITCODE"
+                    }
+                }
+                catch {
+                    Write-Warning "Application rollback failed: $_"
+                    $rollbackSuccessful = $false
+                }
             }
-            catch {
-                Write-Warning "Could not verify service recovery: $_"
+
+            if ($rollbackSuccessful) {
+                try {
+                    Start-Service -Name $ServiceName
+                    Wait-ForService -Status "Running" -TimeoutSeconds 30
+                    Test-DeploymentHealth
+
+                    Write-Warning "Previous application and database are running again."
+                }
+                catch {
+                    Write-Warning "Could not verify service recovery: $_"
+
+                    try {
+                        Stop-Service -Name $ServiceName -Force -ErrorAction Stop
+                        Wait-ForService -Status "Stopped"
+                    }
+                    catch {
+                        Write-Warning "Could not stop the unhealthy service: $_"
+                    }
+                }
             }
-        }
+            else {
+                Write-Warning "Rollback was incomplete. The service has been left stopped to avoid running an incompatible application/database combination."
+            }
+        }    
     }
 
     if (-not $deploymentSucceeded) {

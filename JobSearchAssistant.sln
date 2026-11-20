@@ -1,11 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.0.31903.59
+# Visual Studio Version 18
+VisualStudioVersion = 18.12.12412.261 stable
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JobSearchAssistant.Web", "JobSearchAssistant.Web\JobSearchAssistant.Web.csproj", "{ADADC1C5-F819-4A0D-B57E-1B96A68E54D8}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JobSearchAssistant.Tests", "JobSearchAssistant.Tests\JobSearchAssistant.Tests.csproj", "{E641FBE8-33F6-41C8-8428-636D66F9B393}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JobSearchAssistant.DatabaseTool", "JobSearchAssistant.DatabaseTool\JobSearchAssistant.DatabaseTool.csproj", "{769B30CD-E833-A8B5-6561-3D8130D95859}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -41,6 +43,18 @@ Global
 		{E641FBE8-33F6-41C8-8428-636D66F9B393}.Release|x64.Build.0 = Release|Any CPU
 		{E641FBE8-33F6-41C8-8428-636D66F9B393}.Release|x86.ActiveCfg = Release|Any CPU
 		{E641FBE8-33F6-41C8-8428-636D66F9B393}.Release|x86.Build.0 = Release|Any CPU
+		{769B30CD-E833-A8B5-6561-3D8130D95859}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{769B30CD-E833-A8B5-6561-3D8130D95859}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{769B30CD-E833-A8B5-6561-3D8130D95859}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{769B30CD-E833-A8B5-6561-3D8130D95859}.Debug|x64.Build.0 = Debug|Any CPU
+		{769B30CD-E833-A8B5-6561-3D8130D95859}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{769B30CD-E833-A8B5-6561-3D8130D95859}.Debug|x86.Build.0 = Debug|Any CPU
+		{769B30CD-E833-A8B5-6561-3D8130D95859}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{769B30CD-E833-A8B5-6561-3D8130D95859}.Release|Any CPU.Build.0 = Release|Any CPU
+		{769B30CD-E833-A8B5-6561-3D8130D95859}.Release|x64.ActiveCfg = Release|Any CPU
+		{769B30CD-E833-A8B5-6561-3D8130D95859}.Release|x64.Build.0 = Release|Any CPU
+		{769B30CD-E833-A8B5-6561-3D8130D95859}.Release|x86.ActiveCfg = Release|Any CPU
+		{769B30CD-E833-A8B5-6561-3D8130D95859}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
