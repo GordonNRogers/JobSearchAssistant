@@ -1,7 +1,7 @@
 # JobSearchAssistant Requirements
 
-**Status:** First opportunity-inbox implementation delivered; application restart acceptance check pending
-**Last updated:** 2026-11-19
+**Status:** Local opportunity inbox implemented and deployed; operational backup/restore procedure remains to be established
+**Last updated:** 2026-11-20
 **Primary objective:** Make a personal job search more efficient and better informed.
 
 ## 1. Problem statement
@@ -28,38 +28,40 @@ The initial target is an individual's local workflow. This is not initially inte
 - Initial environment: Windows desktop.
 - Preferred implementation ecosystem: C#/.NET, Visual Studio, and SQL.
 - **Target framework:** .NET 11 (`net11.0`).
-- **SDK:** .NET 11 SDK, baseline 11.0.100. SDK 11.0.100 is installed and has been verified.
-- Initial persistence: SQLite, accessed through Entity Framework Core 11 Code First. Implemented.
-- Schema evolution: source-controlled EF Core migrations. Initial migration generated and applied.
-- Re-entering an equivalent normalized source URL produces a clear duplicate warning. The user can explicitly confirm saving another record.
+- **SDK:** .NET 11 SDK, baseline 11.0.100.
+- Persistence: SQLite through Entity Framework Core 11 Code First.
+- Schema evolution: source-controlled EF Core migrations.
 - Initial user interface: ASP.NET Core Razor Pages, rendered on the server.
-- Current development hosting: ASP.NET Core project launch profiles using direct project launch. IIS Express is not currently configured.
-- Intended production hosting: Kestrel as a Windows Service, bound to loopback and accessible only from the local machine.
+- Development hosting: ASP.NET Core project launch profiles using direct project launch. IIS Express is not configured.
+- Deployed hosting: Kestrel as a Windows Service, bound to `127.0.0.1:5117`.
+- Development database: `%LOCALAPPDATA%\JobSearchAssistant\jobsearch.db`.
+- Deployed database: `C:\ProgramData\JobSearchAssistant\jobsearch.db`.
+- Deployed binaries: `C:\Program Files\JobSearchAssistant`.
 - No initial requirement for multi-user access, public hosting, or mobile support.
 
-The repository contains the ASP.NET Core application project `JobSearchAssistant.Web` and the automated test project `JobSearchAssistant.Tests`. The application implements the first opportunity-inbox workflow using EF Core 11 and SQLite. The local database is stored at `%LOCALAPPDATA%\JobSearchAssistant\jobsearch.db`. The solution build and automated test suite have been verified successfully. Manual verification of persistence across an actual application restart remains outstanding.
-
-.NET 11 and EF Core 11 are Standard Term Support (STS), not Long Term Support (LTS). The project accepts the shorter support lifecycle in exchange for targeting the current releases. Keep the SDK and EF packages on supported servicing versions and plan an upgrade before support ends. Confirm the installed Visual Studio version supports the .NET 11 SDK and tooling.
+.NET 11 and EF Core 11 are Standard Term Support (STS), not Long Term Support (LTS). Keep the SDK and EF packages on supported servicing versions and plan an upgrade before support ends. Confirm the installed Visual Studio version supports the .NET 11 SDK and tooling.
 
 ## 4. Core workflows
 
-### WF-01 — Capture an opportunity
+### WF-01 — Capture and maintain an opportunity
 
 A person can add a job posting using supplied text and its source URL, with manually entered details when extraction is incomplete.
 
 The system records where the posting came from and when it was captured. It must not silently invent missing employer, salary, location, or posting-date information.
 
-**First-increment acceptance criteria**
+**Acceptance criteria**
 
 - A posting can be captured without requiring a live integration with a job board.
 - Employer and job title can be entered manually but are not required if unknown.
 - The source URL and complete original job-description text are required and retained.
 - Capture time is recorded automatically.
-- Saved opportunities can be listed and opened individually.
-- The list is ordered newest first.
+- Saved opportunities can be listed and opened individually; the list is ordered newest first.
 - Re-entering an equivalent normalized source URL produces a clear duplicate warning. The user can explicitly confirm saving another record.
 - Invalid or incomplete input produces actionable validation feedback.
-- The application can be closed and reopened without losing saved opportunities.
+- The user can add or edit one optional free-text comments field on an opportunity.
+- Comments persist independently; saving comments does not modify the original posting text.
+- The user can delete an opportunity from its details page. Deletion uses a POST action and requires browser confirmation.
+- Existing opportunities remain available after application restart and application deployment.
 
 ### WF-02 — Normalize and deduplicate
 
@@ -78,73 +80,41 @@ It identifies likely duplicate postings using URL normalization and a combinatio
 
 The system compares a posting with a user-maintained candidate profile and stated job-search preferences.
 
-Evaluation should distinguish:
-
-- Explicit requirements from preferred qualifications.
-- Supported matches from partial matches and unknowns.
-- Demonstrated experience from skills the candidate merely wants to learn.
-- Potential disqualifiers from ordinary skill gaps.
-- Evidence in the candidate profile from inference made by a model.
+Evaluation should distinguish explicit requirements from preferred qualifications, supported matches from partial matches and unknowns, demonstrated experience from learning goals, potential disqualifiers from ordinary skill gaps, and profile evidence from model inference.
 
 The assessment should provide reasons and supporting excerpts, not just a numeric score. Any score is a prioritization aid, not a probability of being hired.
 
-**Acceptance criteria**
-
-- The user can inspect why a requirement was classified as a match, gap, or unknown.
-- Missing profile information is not turned into a claim of experience.
-- The assessment records the evaluator/model and prompt or schema version where applicable.
-- Invalid AI output is rejected or marked for review; it is not silently accepted.
-- The user can override an assessment and record a reason.
-
 ### WF-04 — Prioritize opportunities
 
-The user can sort and filter opportunities by review status, fit assessment, location/work arrangement, compensation when known, capture date, and application status.
-
-The tool should make the next useful action visible: review, research employer, prepare application, follow up, or close out.
+The user can sort and filter opportunities by review status, fit assessment, location/work arrangement, compensation when known, capture date, and application status. The tool should make the next useful action visible.
 
 ### WF-05 — Track applications
 
-For opportunities the user chooses to pursue, the system tracks application status and relevant dates, notes, contacts, interviews, and follow-up actions.
-
-Initial statuses should be simple and editable: Interested, Researching, Ready to Apply, Applied, Interviewing, Offer, Rejected, Withdrawn, and Closed/Expired.
-
-An opportunity and an application are related but distinct: saving a posting does not mean an application was submitted.
+For opportunities the user chooses to pursue, the system tracks application status and relevant dates, notes, contacts, interviews, and follow-up actions. Saving a posting does not mean an application was submitted.
 
 ### WF-06 — Produce a useful report
 
-The system can produce a concise report of newly captured opportunities, high-priority items, items needing review, active applications, and upcoming follow-ups.
-
-The report should support action rather than encourage activity-volume metrics.
+The system can produce a concise report of newly captured opportunities, high-priority items, items needing review, active applications, and upcoming follow-ups. The report should support action rather than encourage activity-volume metrics.
 
 ## 5. Candidate profile requirements
 
-The profile is user-controlled and should contain only information the user has reviewed and approved for job matching.
+The profile is user-controlled and should contain only information the user has reviewed and approved for job matching. Potential sections include work history, demonstrated technical skills, projects, education, role preferences, location/work-arrangement constraints, and compensation expectations where the user chooses to record them.
 
-Potential sections:
-
-- Work history and responsibilities.
-- Demonstrated technical skills and proficiency/evidence.
-- Projects and accomplishments.
-- Education and certifications.
-- Role preferences and exclusions.
-- Location, remote/hybrid, travel, and work-authorization constraints where relevant.
-- Compensation expectations, when the user chooses to record them.
-
-Do not infer sensitive personal characteristics. Do not store confidential information from a former employer. Keep a clear distinction between verified profile facts and aspirational learning goals.
+Do not infer sensitive personal characteristics. Do not store confidential information from a former employer. Keep verified profile facts distinct from aspirational learning goals.
 
 ## 6. Non-functional requirements
 
 - **Privacy:** Local-first storage; no automatic upload of the resume or candidate profile to third parties.
 - **Transparency:** Retain source URL, capture time, and assessment provenance.
-- **Reliability:** Core capture, storage, deduplication, and tracking must work without an LLM.
-- **Recoverability:** Production database backup and restore must be defined before production use; upgrades must take a pre-migration backup.
+- **Reliability:** Core capture, storage, deduplication, comments, and deletion must work without an LLM.
+- **Recoverability:** Define and test a production database backup and restore procedure. The current deployment script does not yet back up the ProgramData database.
 - **Schema management:** Use EF Core 11 Code First migrations as the authoritative, source-controlled database schema history. Do not recreate or replace the production database during application upgrades.
-- **Deployment isolation:** Production binaries/configuration must be separate from persistent user data. A new application release must not overwrite the SQLite database.
+- **Deployment isolation:** Production binaries/configuration must be separate from persistent user data. An application release must not overwrite the SQLite database.
 - **Maintainability:** Keep responsibilities separated without creating a distributed system.
 - **Cost:** No mandatory paid API or subscription for the initial version.
 - **Security:** Protect local data appropriately; do not store account passwords or automate login to job sites.
 
-## 7. Explicit non-goals for the first increment
+## 7. Explicit non-goals for the current increment
 
 - AI evaluation, fit scoring, or candidate-profile matching.
 - Job-board scraping, scheduled collection, or source integrations.
@@ -152,23 +122,24 @@ Do not infer sensitive personal characteristics. Do not store confidential infor
 - Dashboards and elaborate reporting.
 - Automatically submitting applications or answering employer screening questions.
 - A public job board, recruiter marketplace, or multi-user SaaS.
-- Resume rewriting or cover-letter generation as a prerequisite.
-- Complex multi-agent orchestration.
-- Microservices, message brokers, Kubernetes, or cloud hosting.
+- Complex multi-agent orchestration, microservices, message brokers, Kubernetes, or cloud hosting.
 - A JavaScript-heavy frontend framework.
 
 ## 8. Delivery priorities
 
-### First increment — local opportunity inbox
+### Delivered — local opportunity inbox
 
-1. ASP.NET Core Razor Pages application targeting .NET 11.
-2. Manual capture of source URL and original job-description text; employer/title optional.
-3. Automatic capture timestamp.
-4. EF Core 11 Code First model and SQLite persistence, with an initial migration.
-5. Newest-first opportunity list and detail view.
-6. Duplicate URL warning.
+- ASP.NET Core Razor Pages application targeting .NET 11.
+- Manual capture of source URL and original job-description text; employer/title optional.
+- Automatic capture timestamp.
+- EF Core 11 Code First model and SQLite persistence with source-controlled migrations.
+- Newest-first inbox and detail view.
+- Duplicate URL warning with explicit confirmation.
+- Editable optional comments field, separate from original posting text.
+- Confirmed opportunity deletion through a POST handler.
+- Automated integration tests for comment persistence and deletion.
 
-**Implementation status:** The capture, persistence, list, detail, validation, and duplicate-warning functionality has been implemented. Automated integration tests pass. Actual application shutdown/restart persistence verification remains outstanding.
+Latest verified result: solution build succeeded; all 11 tests passed. The application was published and deployed as a Windows Service. The deployment health check returned HTTP 200, and the user confirmed the application looked correct.
 
 ### MVP — useful personal workflow
 
@@ -194,22 +165,15 @@ Do not infer sensitive personal characteristics. Do not store confidential infor
 
 ## 9. Success measures
 
-Evaluate the tool by whether it:
-
-- Reduces time spent collecting and reviewing postings.
-- Finds relevant opportunities that would otherwise be missed.
-- Reduces duplicate review.
-- Helps prioritize applications against real constraints.
-- Prevents loss of application and follow-up details.
-- Reveals recurring market skill requirements that can inform skills development.
+Evaluate the tool by whether it reduces time spent collecting and reviewing postings, finds relevant opportunities, reduces duplicate review, helps prioritize applications against real constraints, prevents loss of application/follow-up details, and reveals recurring market skill requirements.
 
 Do not treat lines of code, number of integrations, model complexity, or number of captured listings as success by themselves.
 
 ## 10. Open decisions
 
-Resolve these through a small working prototype rather than speculative design:
+Resolve these through small working prototypes rather than speculative design:
 
-- Production deployment/update mechanism details (Windows Service, release layout, and migration execution procedure).
+- Production database backup and restore procedure, including pre-migration backup and recovery testing.
 - Exact candidate-profile editing workflow.
 - Which job-alert/email format is worth importing first.
 - Whether local AI evaluation is sufficiently accurate and useful on real postings.
