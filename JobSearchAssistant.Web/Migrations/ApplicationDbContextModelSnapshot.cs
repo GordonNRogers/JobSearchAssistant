@@ -15,7 +15,7 @@ partial class ApplicationDbContextModelSnapshot : ModelSnapshot
     // If you encounter a merge conflict in the line below, it means you need to
     // discard one of the migration branches and recreate its migrations on top of
     // the other branch. See https://aka.ms/efcore-docs-migrations-conflicts for more info.
-    public override string LastMigrationId => "20261118093536_InitialCreate";
+    public override string LastMigrationId => "20261120041706_AddOpportunityComments";
 
     protected override void BuildModel(ModelBuilder modelBuilder)
     {
@@ -29,6 +29,9 @@ partial class ApplicationDbContextModelSnapshot : ModelSnapshot
                     .HasColumnType("INTEGER");
 
                 b.Property<DateTime>("CapturedAtUtc")
+                    .HasColumnType("TEXT");
+
+                b.Property<string>("Comments")
                     .HasColumnType("TEXT");
 
                 b.Property<string>("CompanyName")

@@ -15,8 +15,11 @@ public class JobOpportunity
 
     public string? JobTitle { get; set; }
 
+    public string? Comments { get; set; }
+
     [Required(ErrorMessage = "The original job posting text is required.")]
     public string OriginalPostingText { get; set; } = string.Empty;
 
     public DateTime CapturedAtUtc { get; set; }
+
 }

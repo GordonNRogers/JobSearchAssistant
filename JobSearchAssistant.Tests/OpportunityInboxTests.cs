@@ -445,4 +445,132 @@ public class OpportunityInboxTests
         Assert.True(newerPosition < olderPosition,
             "The inbox should display the newest opportunity first.");
     }
+
+    [Fact]
+    public async Task Details_SaveComments_PersistsTrimmedComments()
+    {
+        using var factory = new TestWebApplicationFactory();
+        using var client = factory.CreateClient(
+            new Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactoryClientOptions
+            {
+                AllowAutoRedirect = false
+            });
+
+        await factory.InitializeDatabaseAsync();
+
+        int opportunityId;
+
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+            var opportunity = new JobSearchAssistant.Web.Models.JobOpportunity
+            {
+                SourceUrl = "https://example.com/jobs/developer",
+                OriginalPostingText = "Original posting text",
+                CapturedAtUtc = DateTime.UtcNow
+            };
+
+            db.JobOpportunities.Add(opportunity);
+            await db.SaveChangesAsync();
+
+            opportunityId = opportunity.Id;
+        }
+
+        var pageResponse = await client.GetAsync(
+            $"/Opportunities/Details/{opportunityId}");
+
+        pageResponse.EnsureSuccessStatusCode();
+
+        var html = await pageResponse.Content.ReadAsStringAsync();
+        var token = ExtractAntiforgeryToken(html);
+
+        var form = new Dictionary<string, string>
+        {
+            ["__RequestVerificationToken"] = token,
+            ["Comments"] = "  Follow up with recruiter next week.  "
+        };
+
+        var response = await client.PostAsync(
+            $"/Opportunities/Details/{opportunityId}?handler=SaveComments",
+            new FormUrlEncodedContent(form));
+
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        Assert.Equal(
+            $"/Opportunities/Details/{opportunityId}",
+            response.Headers.Location?.OriginalString);
+
+        using var verificationScope = factory.Services.CreateScope();
+        var verificationDb = verificationScope.ServiceProvider
+            .GetRequiredService<ApplicationDbContext>();
+
+        var saved = await verificationDb.JobOpportunities
+            .SingleAsync(o => o.Id == opportunityId);
+
+        Assert.Equal(
+            "Follow up with recruiter next week.",
+            saved.Comments);
+
+        Assert.Equal("Original posting text", saved.OriginalPostingText);
+    }
+
+    [Fact]
+    public async Task Details_Delete_RemovesOpportunityAndRedirectsToInbox()
+    {
+        using var factory = new TestWebApplicationFactory();
+        using var client = factory.CreateClient(
+            new Microsoft.AspNetCore.Mvc.Testing.WebApplicationFactoryClientOptions
+            {
+                AllowAutoRedirect = false
+            });
+
+        await factory.InitializeDatabaseAsync();
+
+        int opportunityId;
+
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+            var opportunity = new JobSearchAssistant.Web.Models.JobOpportunity
+            {
+                SourceUrl = "https://example.com/jobs/developer",
+                OriginalPostingText = "Original posting text",
+                Comments = "Test comment",
+                CapturedAtUtc = DateTime.UtcNow
+            };
+
+            db.JobOpportunities.Add(opportunity);
+            await db.SaveChangesAsync();
+
+            opportunityId = opportunity.Id;
+        }
+
+        var pageResponse = await client.GetAsync(
+            $"/Opportunities/Details/{opportunityId}");
+
+        pageResponse.EnsureSuccessStatusCode();
+
+        var html = await pageResponse.Content.ReadAsStringAsync();
+        var token = ExtractAntiforgeryToken(html);
+
+        var form = new Dictionary<string, string>
+        {
+            ["__RequestVerificationToken"] = token
+        };
+
+        var response = await client.PostAsync(
+            $"/Opportunities/Details/{opportunityId}?handler=Delete",
+            new FormUrlEncodedContent(form));
+
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        Assert.Equal("/", response.Headers.Location?.OriginalString);
+
+        using var verificationScope = factory.Services.CreateScope();
+        var verificationDb = verificationScope.ServiceProvider
+            .GetRequiredService<ApplicationDbContext>();
+
+        Assert.False(await verificationDb.JobOpportunities
+            .AnyAsync(o => o.Id == opportunityId));
+    }
 }
