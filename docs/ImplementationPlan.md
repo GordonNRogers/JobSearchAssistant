@@ -1,7 +1,7 @@
 # JobSearchAssistant Implementation Plan
 
-**Status:** Initial foundation and opportunity-inbox implementation delivered; final persistence acceptance check pending
-**Last updated:** 2026-11-19
+**Status:** Opportunity-inbox increment implemented and deployed; database backup/restore hardening is the remaining deployment task
+**Last updated:** 2026-11-20
 
 ## Delivery rule
 
@@ -9,90 +9,50 @@ Build the smallest increment that produces a useful job-search outcome. Use the 
 
 Job applications, networking, and interview preparation continue independently. If development begins consuming time without improving the job search, reduce or pause it.
 
-The first increment is intentionally a narrow vertical slice: capture a real posting, persist it locally, and retrieve it through a browser. Do not add AI or automation to make the first release feel more impressive.
+Do not add AI or automation merely to make a release feel more impressive. Extend the application in response to observed workflow needs.
 
 ## Step 0 — Establish the application and development baseline
 
 ### Completed and verified
 
-- Installed .NET SDK 11.0.100 and verified it with `dotnet --list-sdks` and `dotnet --version`.
 - Created `JobSearchAssistant.sln`.
 - Created the ASP.NET Core Razor Pages project `JobSearchAssistant.Web`, targeting `net11.0`.
-- Confirmed the solution contains the expected web project.
-- Built the solution successfully with `dotnet build .\JobSearchAssistant.sln`.
-- Started the application with the HTTPS project launch profile and confirmed the default page loads at the local development URL.
-- Committed the initial scaffold to `main` and pushed it to GitHub. The scaffold commit is `d942836`.
+- Added `JobSearchAssistant.Tests`.
+- Integrated EF Core 11 and SQLite with source-controlled migrations.
+- Verified solution build, automated tests, and local browser workflow.
+- Confirmed direct project launch; IIS Express is not required.
 
-The current launch profiles use `commandName: Project`; they run the ASP.NET Core application directly. IIS Express is not configured and is not a prerequisite.
+.NET 11 is STS, not LTS. Keep the SDK patched and plan an upgrade before framework support ends.
 
-### Remaining foundation work
+**Exit condition:** .NET 11 solution builds and tests, EF Core/SQLite persistence works, and the application opens locally. Demonstrated.
 
-- Confirm the installed Visual Studio version supports the .NET 11 SDK and ASP.NET Core 11 tooling, and verify build/debug from Visual Studio.
+## Step 1 — Build the local opportunity inbox
 
-The solution build, automated test run, EF Core/SQLite integration, migration tooling, and local browser workflow have been verified.
+### Delivered
 
-.NET 11 is STS, not LTS. The project deliberately targets it, so keep the SDK patched and plan an upgrade before the framework reaches end of support.
-
-**Exit condition:** The .NET 11 SDK is recognized, the solution builds and tests successfully, EF Core/SQLite tooling is ready, and the application opens locally in a browser. These conditions have been demonstrated. Visual Studio-specific build/debug verification remains optional environment confirmation.
-
-## Step 1 — Build the first usable opportunity inbox
-
-### Capture form
-
-- Accept a source URL and complete original job-description text.
-- Accept employer and job title as optional manual fields.
-- Record capture timestamp automatically.
-- Validate required fields and show useful errors.
-- Preserve the original URL and posting text.
-
-### Persistence and review
-
-- Define the initial `JobOpportunity` entity and EF Core `DbContext`.
-- Create the initial source-controlled EF Core migration.
-- Initialize the local SQLite database by applying that migration.
-- Save captured opportunities through EF Core.
-- List saved opportunities newest first.
-- Open a detail page showing the original posting and source metadata.
-- Normalize source URLs consistently and warn when the same normalized URL already exists.
-- Keep the database in a stable local application-data location, not the working directory by accident.
-
-### Implementation status
-
-Implemented:
-
-- `JobOpportunity` entity and EF Core `ApplicationDbContext`.
-- Initial source-controlled EF Core migration.
-- Local SQLite database initialization.
-- Opportunity capture form and validation.
+- Manual capture of source URL and complete original job-posting text; employer/title optional.
 - Automatic UTC capture timestamp.
-- Newest-first inbox and opportunity details page.
+- EF Core 11 `JobOpportunity` entity, DbContext, SQLite persistence, and source-controlled migration.
+- Newest-first inbox and opportunity detail page.
+- Required-field validation.
 - Normalized URL duplicate warning with explicit confirmation.
-- xUnit integration tests using `WebApplicationFactory` and in-memory SQLite.
+- Optional editable comments field on the detail page.
+- Comments are persisted independently and do not alter the original posting.
+- Opportunity deletion from the detail page using a confirmed POST action.
+- Integration tests for comment persistence and deletion.
 
-Latest verified result: solution build succeeded and all 10 tests passed.
+### Verification
 
-### Remaining acceptance verification
+Latest verified solution build succeeded and all **11 tests passed**. The deployed application was published and installed under `C:\Program Files\JobSearchAssistant`, with persistent SQLite data under `C:\ProgramData\JobSearchAssistant\jobsearch.db`.
 
-The actual local database has been created and the initial migration applied. However, the application shutdown/restart test has not yet been completed. Do not consider the first increment fully accepted until that test passes.
+The deployment script completed successfully, restarted the Windows Service, and received HTTP 200 from its loopback health check. The user confirmed the deployed application looked correct.
 
-### First-increment acceptance test
-
-1. Start the application.
-2. Capture a real job posting copied from a job board.
-3. Confirm it appears in the opportunity list.
-4. Open it and verify the original URL and complete posting text are intact.
-5. Stop and restart the application.
-6. Confirm the opportunity remains available.
-7. Attempt to capture the same URL again and confirm a duplicate warning is shown.
-8. Delete only the separate disposable test database, not %LOCALAPPDATA%\JobSearchAssistant\jobsearch.db, recreate it from the initial migration, and confirm the inbox works against the freshly migrated schema.
-
-**Exit condition:** The user can capture, close, reopen, find, and review real postings without losing source information or creating unnoticed same-URL duplicates. The implementation and automated tests are in place. The actual application shutdown/restart verification remains outstanding.
-
-Do not include AI evaluation, scraping, application status, dashboards, or follow-up tracking in this increment.
+**Exit condition:** Capture, persist, list, review, comment on, and delete opportunities. Automated coverage and deployed UI check completed.
 
 ## Step 2 — Improve normalization and duplicate review
 
-- Normalize URL variations.
+Deferred until real use demonstrates a need.
+
 - Extract or accept employer, title, location, work arrangement, salary, and dates when available.
 - Identify likely duplicates across different URLs using conservative deterministic signals.
 - Surface uncertain duplicates for human review.
@@ -139,19 +99,27 @@ Only proceed after capture, profile data, and deterministic behavior are dependa
 
 **Exit condition:** An integration demonstrably saves time or improves coverage enough to justify maintenance.
 
-## Step 7 — Prepare a stable production installation
+## Step 7 — Harden production operations
 
-Do this after the core application is useful and reliable; it is not a prerequisite for the first increment.
+### Implemented
 
-- Publish a release separately from the development output.
-- Install the application as a Windows Service hosting Kestrel, bound to loopback only.
-- Keep releases/configuration separate from the persistent SQLite database under `%ProgramData%\JobSearchAssistant`.
-- Configure service startup, restart/recovery behavior, and logging.
-- Define a deployment procedure: stop service, back up database, apply the release's EF migration bundle or reviewed SQL script, switch/install the application release, then start and smoke-test the service.
-- Retain the previous binary release and document database restore requirements. Do not assume binary rollback reverses a database migration.
-- Test an upgrade using a copy of a database containing representative opportunity records; verify records survive.
+- Published application separate from persistent user data.
+- Kestrel hosted by the `JobSearchAssistant` Windows Service.
+- Service configured for automatic startup and recovery behavior.
+- Loopback-only listener at `127.0.0.1:5117`.
+- Production SQLite database stored at `C:\ProgramData\JobSearchAssistant\jobsearch.db`.
+- `scripts\Deploy.ps1` automates build, tests, publish, application-file backup, service stop/update/start, and HTTP health verification.
+- Normal deployment does not overwrite the ProgramData database or recreate the existing service.
 
-**Exit condition:** A fresh install and an upgrade both work; application replacement does not overwrite user data; the service starts automatically and remains local-only; and a tested backup/restore path exists.
+### Remaining operational hardening
+
+- Add a deliberate ProgramData SQLite backup before schema-changing deployment.
+- Define and test restore/recovery, including the relationship between database schema migrations and binary rollback.
+- Consider retaining timestamped database backups outside the application release directory.
+
+The current script backs up application files for binary rollback; it does **not** back up the production database. The application applies EF Core migrations during Windows Service startup, so a binary rollback alone cannot reverse an applied schema migration.
+
+**Exit condition:** A fresh install and upgrade work; application replacement does not overwrite user data; the service starts automatically and remains local-only; and a tested database backup/restore path exists. The first three have been demonstrated; database backup/restore remains open.
 
 ## Stop / defer conditions
 
