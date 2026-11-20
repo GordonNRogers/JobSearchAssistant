@@ -1,6 +1,6 @@
 # JobSearchAssistant Implementation Plan
 
-**Status:** Initial opportunity-inbox increment implemented; local Windows Service deployment operational
+**Status:** Opportunity inbox implemented and deployed; database backup and rollback are implemented, with operational recovery validation still open
 **Last updated:** 2026-11-20
 
 ## Delivery rule
@@ -8,6 +8,8 @@
 Build the smallest increment that produces a useful job-search outcome. Use the tool during development rather than postponing use until a complete application exists.
 
 Job applications, networking, and interview preparation continue independently. If development begins consuming time without improving the job search, reduce or pause it.
+
+Do not add AI or automation merely to make a release feel more impressive. Extend the application in response to observed workflow needs.
 
 ## Step 0 — Establish the application and development baseline
 
@@ -19,40 +21,40 @@ Job applications, networking, and interview preparation continue independently. 
 - Added EF Core 11 and SQLite persistence with source-controlled migrations.
 - Added `JobSearchAssistant.Tests` for automated integration testing.
 - Added `JobSearchAssistant.DatabaseTool` for SQLite backup, restore, and integrity verification.
+- Verified the solution build, automated tests, local browser workflow, and direct project launch; IIS Express is not required.
+
+.NET 11 is STS, not LTS. Keep the SDK patched and plan an upgrade before framework support ends.
+
+**Exit condition:** The .NET 11 solution builds and tests, EF Core/SQLite persistence works, and the application opens locally. Demonstrated.
 
 ## Step 1 — Build the first usable opportunity inbox
 
 ### Implemented
 
-- `JobOpportunity` entity and EF Core `ApplicationDbContext`.
-- Source-controlled EF Core migrations.
-- Local SQLite database initialization.
-- Opportunity capture form with required-field validation and optional employer/title.
+- Manual capture of the source URL and complete original job-posting text; employer/title optional.
+- `JobOpportunity` entity, EF Core `ApplicationDbContext`, source-controlled migrations, and local SQLite initialization.
 - Automatic UTC capture timestamp.
 - Newest-first inbox and opportunity detail page.
-- Normalized URL duplicate warning with explicit confirmation.
-- Save and update opportunity comments.
-- Delete opportunity with confirmation.
-- xUnit integration tests using SQLite.
+- Required-field validation and normalized URL duplicate warning with explicit confirmation.
+- Optional editable comments, persisted independently without changing the original posting.
+- Opportunity deletion from the detail page using a confirmed POST action.
+- xUnit integration tests using SQLite, including comment persistence and deletion.
 
 ### Acceptance status
 
-The implemented workflow supports capture, persistence, listing, detail review, duplicate handling, comments, and deletion. The current automated test suite passes 11 tests.
+The workflow supports capture, persistence, listing, detail review, duplicate handling, comments, and deletion. The automated test suite passes all 11 tests.
 
-The earlier first-increment restart check is superseded by the operational deployment: the application is running as a Windows Service against the persistent `%ProgramData%` database. The latest deployment completed and passed its HTTP health check. This verifies that deployment/startup succeeded; it is not a substitute for a separately documented data-retention test across a deliberate service restart with a known production record.
+**Exit condition:** Capture, persist, list, review, comment on, and delete opportunities. Automated coverage and the deployed UI check completed.
 
 ## Step 2 — Establish repeatable local deployment and database recovery
 
 ### Implemented
 
-- Windows Service named `JobSearchAssistant`.
-- Kestrel bound to loopback at `http://127.0.0.1:5117/`.
-- Application binaries installed under `%ProgramFiles%\JobSearchAssistant`.
-- Persistent SQLite database stored under `%ProgramData%\JobSearchAssistant`.
+- Windows Service named `JobSearchAssistant`, with Kestrel bound to loopback at `http://127.0.0.1:5117/`.
+- Application binaries installed under `%ProgramFiles%\JobSearchAssistant`; persistent SQLite database stored under `%ProgramData%\JobSearchAssistant`.
 - `scripts\Deploy.ps1` builds, tests, publishes, backs up application files, stops and updates the service, and performs a post-deployment health check.
 - `JobSearchAssistant.DatabaseTool` provides SQLite backup, restore, and integrity verification.
-- Deployment creates a timestamped, integrity-checked database backup before updating an existing installation.
-- Deployment contains a rollback path for restoring the database and previous application files if deployment fails.
+- Deployment creates a timestamped, integrity-checked database backup before updating an existing installation and includes a rollback path for the database and previous application files if deployment fails.
 
 ### Verified
 
@@ -64,6 +66,8 @@ The earlier first-increment restart check is superseded by the operational deplo
 - The service restarted and the HTTP health check passed.
 - DatabaseTool backup/restore was tested independently with a disposable database; restored data was verified.
 
+The deployed application runs as a Windows Service against the persistent `%ProgramData%` database. The latest deployment and health check confirm deployment/startup success, but do not replace a data-retention test across a deliberate service restart with a known production record.
+
 ### Not yet verified
 
 - The complete deployment rollback path has not been failure-injection-tested.
@@ -71,6 +75,8 @@ The earlier first-increment restart check is superseded by the operational deplo
 - Backup retention and cleanup policy has not been defined.
 
 Do not deliberately break the live installation to test rollback. If rollback testing is pursued, use a disposable service installation and database.
+
+## Step 3 — Improve normalization and duplicate review
 
 ## Step 3 — Improve normalization and duplicate review
 

@@ -1,6 +1,6 @@
 # JobSearchAssistant Architecture
 
-**Status:** Opportunity inbox implemented and deployed as a local Windows Service
+**Status:** Opportunity inbox deployed as a local Windows Service; database backup/restore is automated, but failure-triggered rollback remains untested
 **Last updated:** 2026-11-20
 
 ## 1. Architectural objective

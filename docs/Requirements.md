@@ -40,6 +40,7 @@ The target is an individual's local workflow. This is not intended to be a comme
 - Database backups: `%ProgramData%\JobSearchAssistant\Backups`.
 - Projects: `JobSearchAssistant.Web`, `JobSearchAssistant.Tests`, and `JobSearchAssistant.DatabaseTool`.
 
+.NET 11 and EF Core 11 are Standard Term Support (STS), not Long Term Support (LTS). Keep the SDK and EF packages on supported servicing versions and plan an upgrade before support ends. Confirm the installed Visual Studio version supports the .NET 11 SDK and tooling.
 .NET 11 and EF Core 11 are STS releases. Keep the SDK and packages on supported servicing versions and plan an upgrade before support ends.
 
 ## 4. Core workflows
@@ -147,6 +148,7 @@ The deployment script creates and verifies a pre-deployment SQLite backup before
 - Dashboards and elaborate reporting.
 - Automatically submitting applications or answering employer screening questions.
 - A public job board, recruiter marketplace, or multi-user SaaS.
+- Complex multi-agent orchestration, microservices, message brokers, Kubernetes, or cloud hosting.
 - Complex multi-agent orchestration.
 - Microservices, message brokers, Kubernetes, or cloud hosting.
 - A JavaScript-heavy frontend framework.
@@ -155,6 +157,17 @@ The deployment script creates and verifies a pre-deployment SQLite backup before
 
 ### Delivered — local opportunity inbox
 
+- ASP.NET Core Razor Pages application targeting .NET 11.
+- Manual capture of source URL and original job-description text; employer/title optional.
+- Automatic capture timestamp.
+- EF Core 11 Code First model and SQLite persistence with source-controlled migrations.
+- Newest-first inbox and detail view.
+- Duplicate URL warning with explicit confirmation.
+- Editable optional comments field, separate from original posting text.
+- Confirmed opportunity deletion through a POST handler.
+- Automated integration tests for comment persistence and deletion.
+
+Latest verified result: solution build succeeded; all 11 tests passed. The application was published and deployed as a Windows Service. The deployment health check returned HTTP 200, and the user confirmed the application looked correct.
 - ASP.NET Core Razor Pages application targeting .NET 11.
 - Manual capture of source URL and original job-description text.
 - Optional employer/title and automatic capture timestamp.
@@ -200,4 +213,3 @@ Resolve these through small working prototypes rather than speculative design:
 - Which job-alert/email format is worth importing first.
 - Whether local AI evaluation is sufficiently accurate and useful on real postings.
 - Whether a source integration is worth maintaining compared with manual or alert-based capture.
-- Backup retention and a safely tested recovery procedure.
