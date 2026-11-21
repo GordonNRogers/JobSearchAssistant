@@ -125,6 +125,23 @@ Only proceed after capture, profile data, and deterministic behavior are dependa
 
 **Exit condition:** An integration demonstrably saves time or improves coverage enough to justify maintenance.
 
+## Step 8 — Investigate Glassdoor HTTP retrieval (separate experiment)
+
+This experiment is isolated on `experiment/glassdoor-http-scraping`; it is not a production application increment and does not change the current deployed feature set.
+
+### Planned sequence
+
+1. Use `curl.exe` from PowerShell to request the user-provided Glassdoor Recruiter job-view URL without authentication.
+2. Capture and inspect the status code, redirect chain/final URL, response headers, content type, and HTML body. Keep any response artifacts free of session secrets and personal data.
+3. Determine whether the job details are present in the response, whether the page is a JavaScript-rendered shell, or whether Glassdoor requires authentication or returns an access challenge.
+4. If authentication is required, investigate session handling separately. Do not assume username/password automation is appropriate; browser cookies may be cached, and session cookies must be protected as credentials.
+5. If retrieval is viable and permitted, implement the equivalent request using .NET `HttpClient` and introduce a small `IWebScraper` contract with an initial Glassdoor-specific implementation.
+6. Keep transport/session concerns separate from site-specific extraction. Add further site-specific strategies only when real target URLs demonstrate the need.
+
+`curl.exe` is a diagnostic tool, not a production dependency. No extraction or authentication implementation is complete. Do not mark this step complete until the response has been inspected and a repeatable .NET implementation has been tested. Stop if access requires bypassing a challenge or other access control.
+
+**Exit condition:** Demonstrate a permitted, repeatable `HttpClient` retrieval and extraction for the supplied Glassdoor test case, with tests for the observed response variants. If that is not viable, document the limitation and stop rather than building browser automation or speculative infrastructure.
+
 ## Stop / defer conditions
 
 Do not proceed to the next stage merely because it is listed. Defer work when:
