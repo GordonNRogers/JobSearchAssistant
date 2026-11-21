@@ -171,42 +171,26 @@ These checks do not establish that the combined deployment rollback path has bee
 
 ## 10. Future capabilities and boundaries
 
-Potential future workflows include candidate profile management, deterministic evaluation, optional local Ollama-assisted assessment, application tracking, reporting/export, and permitted source adapters.
+Potential future workflows include candidate profile management, deterministic evaluation, optional local Ollama-assisted assessment, application tracking, reporting/export, permitted source adapters, and a user-driven browser capture companion.
 
 Keep deterministic rules authoritative for explicit constraints and known data. Treat AI output as untrusted, validate it, retain evidence and evaluator metadata, and keep the user responsible for consequential decisions.
 
-Do not add scraping frameworks, plugin discovery, event buses, distributed messaging, multi-agent orchestration, or remote services without a demonstrated requirement. The separate Glassdoor HTTP experiment is intentionally narrower: a small `IWebScraper` contract, a site-specific implementation, and shared `HttpClient` infrastructure only as evidence requires.
+Do not add scraping frameworks, plugin discovery, event buses, distributed messaging, multi-agent orchestration, or remote services without a demonstrated requirement. The Glassdoor HTTP experiment is closed as a no-go for automated retrieval without express written authorization. It does not justify an IWebScraper, a Glassdoor scraper, or generalized scraping infrastructure.
 
-## 11. Experimental architecture — Glassdoor HTTP retrieval
+## 11. Optional browser capture companion (not implemented)
 
-This work is isolated on the `experiment/glassdoor-http-scraping` branch. It is not part of the deployed application and must not be described as an implemented product capability.
+A browser extension may eventually reduce context switching without becoming a job-board scraper. The conservative design is a small popup or side panel that:
 
-### Intended shape
+- Reads the active tab URL only after an explicit user action, to populate the source URL.
+- Presents a local capture form for the user to enter employer, title, and any other details manually.
+- Submits the user-confirmed record to a narrow local intake endpoint on 127.0.0.1.
+- Creates a draft for review; it does not silently save an opportunity.
 
-- **`IWebScraper`** is the application-facing abstraction for retrieving and extracting job details from a supplied posting URL.
-- **Glassdoor implementation** is the first site-specific scraper, contingent on proving that the supplied Glassdoor Recruiter job-view page can be retrieved and parsed reliably.
-- **Scraper selection** should be based on the target URL/site and allow additional site-specific implementations later. Do not design a plugin marketplace or speculative site knowledge base now.
-- **HTTP transport** uses .NET `HttpClient`. `curl.exe` is for manual diagnostics and request/response inspection, not a runtime dependency.
-- **Session/authentication** is a separate concern from page parsing. A future session abstraction may own cookies and authenticated request state; the scraper should not own credential storage.
+For Glassdoor, do not have the extension inspect the page DOM, read selected page text, monitor the clipboard, inject a content script, or collect data in the background without express written permission. Even if the user highlights text and clicks an extension button, the extension still programmatically reads and transfers website content; user initiation is a meaningful distinction but does not establish that this activity is permitted under Glassdoor's terms. A popup/side panel can avoid switching to a separate application page, but it cannot make automated extraction permissible.
 
-### Investigation sequence
+A user could manually copy selected text and paste it into an extension popup while remaining on the Glassdoor tab. This is more convenient than navigating to the JobSearchAssistant page, but it remains copying Glassdoor content into another application and does not resolve the separate content-use restrictions. Keep the capture form usable with manually entered fields and a Glassdoor URL even when no posting text is transferred.
 
-1. Request the supplied Glassdoor URL anonymously with `curl.exe`.
-2. Record status, redirect behavior/final URI, relevant response headers, content type, and a safely stored response body.
-3. Inspect whether job data is in the returned HTML or whether the response is a sign-in page, challenge, or JavaScript shell.
-4. Only if required, investigate an authenticated request and the minimum session mechanism needed.
-5. Reproduce any viable request with .NET `HttpClient`, then implement extraction behind `IWebScraper`.
-
-The user can view the URL in a normal browser, but browser authentication may be cached. This does not establish that an anonymous HTTP request will succeed. No HTTP response has yet been captured, no extraction has been demonstrated, and no authentication design has been selected.
-
-### Security and operational constraints
-
-- Treat cookies, session identifiers, and credentials as secrets.
-- Never commit secrets or raw authenticated response artifacts.
-- Do not place cookies in PowerShell command history or diagnostic logs.
-- If persistence is needed, evaluate OS-protected storage (for example, Windows DPAPI) rather than plaintext files; do not implement persistence until the session requirement is demonstrated.
-- Let `HttpClientHandler` handle ordinary redirects and cookie-container behavior where appropriate, but inspect the actual response rather than assuming site behavior.
-- Respect site terms, access controls, and rate limits. Do not bypass CAPTCHA, bot challenges, authentication controls, or other restrictions.
+The extension and local intake API are future ideas only. No extension, endpoint, browser permission, or draft workflow is implemented. Before implementation, verify the browser extension's permission model, secure local-origin communication, request-forgery protections, and Glassdoor's applicable terms. Do not expose the local service beyond loopback.
 
 ## 12. Decisions still deferred
 
