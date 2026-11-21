@@ -106,3 +106,35 @@ Do not commit the raw response body, full test URL, public IP address, Cloudflar
 - The current Terms of Use were reviewed directly; the API-partnership status is attributed to secondary reporting because the Help Center article body did not render during research.
 
 **Outcome:** Close the Glassdoor scraping experiment as no-go under current evidence and terms. Continue using the existing manual capture capability; prefer employer-hosted job postings where available.
+
+
+## Follow-up design question — browser-assisted manual capture
+
+A browser extension was considered as a way to reduce the friction of manually capturing a Glassdoor-discovered opportunity. This is distinct from reopening the HTTP scraping experiment.
+
+### Conservative option: local capture popup or side panel
+
+A future extension could provide a small popup or side panel while the user remains on the Glassdoor tab. After an explicit click, it could read the active tab URL and populate the source URL field. The user would manually enter employer, title, location, and personal notes, then submit a draft to a loopback-only JobSearchAssistant intake endpoint. This avoids navigating to a separate application page and does not require the extension to read Glassdoor page content.
+
+This still needs a security review of browser permissions, local-origin communication, request-forgery protections, and the local endpoint. The extension and endpoint are not implemented.
+
+### Manual text transfer option
+
+The user could select and copy relevant text in the browser, open the extension popup, and paste it into a text field. This reduces context switching, but it remains copying Glassdoor content into another application. Glassdoor's terms contain content-use restrictions separate from the prohibition on automated scraping; manual copying does not automatically resolve those restrictions.
+
+### Do not assume click-to-read selection is permitted
+
+An extension that reads selected text from the page or receives selected text from a context-menu action after the user highlights it is more user-directed than background collection. However, the extension is still programmatically reading and transferring website content. Glassdoor's current terms do not provide an explicit exception for this design. Do not treat a user click, a manually highlighted selection, or use of Chrome's activeTab permission as Glassdoor authorization. Obtain express written permission or clarification before implementing it for Glassdoor.
+
+A safe engineering boundary absent that permission is therefore: read only the active tab URL after a user gesture; have the user manually enter the fields; do not read page DOM, selected text, or clipboard contents automatically. If the user manually pastes text, retain the separate content-use caveat above.
+
+### Proposed intake payload (not implemented)
+
+- Source URL (read from active tab after explicit user action)
+- Employer and job title (user-entered)
+- Location (user-entered, optional)
+- Personal notes (user-entered, optional)
+- Posting text (optional, only when the user supplies it and its reuse is appropriate)
+- Capture timestamp (assigned by JobSearchAssistant)
+
+The endpoint should create a reviewable draft, not silently save an opportunity. This proposal does not change the experiment's no-go decision for automated Glassdoor retrieval.
