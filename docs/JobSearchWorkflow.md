@@ -18,14 +18,18 @@ Use this as the initial search baseline. Adjust it when actual results show that
 | Dimension | Initial target |
 |---|---|
 | Primary technology | C#, .NET, ASP.NET Core |
-| Seniority | Senior Software Developer, Senior Software Engineer, Senior .NET Developer, Senior C# Developer |
+| Potential titles | Senior Software Engineer, Senior Software Developer, Senior .NET/C# Developer, Backend Engineer/Developer, Application Developer/Engineer, Software Engineer, Systems Engineer, Integration Engineer, API Developer, Technical Lead (individual-contributor roles only) |
 | Work arrangement | Fully remote |
 | Geographic eligibility | Remote roles open to candidates in the United States |
 | Employment | Full-time preferred; contract-to-hire acceptable; strictly contract is lower priority |
 | Relevant supporting technologies | SQL Server, Azure, APIs, backend services, messaging and system integration |
 | Lower-priority / avoid | Management roles, primarily production-support roles, and frontend-heavy positions |
 
-Do not require .NET to appear in the job title. A Senior Software Engineer role can be relevant when C#/.NET is a primary implementation technology in the description.
+**Titles are discovery hints, not qualification criteria.** Do not restrict the search to titles containing "Senior" or ".NET." Consider titles such as Software Engineer/Developer, Backend Engineer/Developer, Application Developer/Engineer, Systems Engineer, Integration Engineer, API Developer, and individual-contributor Technical Lead roles when the actual responsibilities and required-skills list align. Conversely, a senior-sounding title is not enough to make a posting relevant.
+
+Evaluate the posting's "laundry list" of required and preferred qualifications, responsibilities, and technologies. Look for substantive overlap with demonstrated experience, especially C#, .NET, SQL Server, backend/business application development, APIs, Azure, messaging, and integration. Distinguish must-have requirements from preferred qualifications and incidental technology mentions. A role should not be rejected merely because the title is unfamiliar, nor accepted because it contains a familiar title or keyword.
+
+The current search baseline is not a claim that every listed supporting technology is equally strong or equally important. Review the complete requirements against the user's actual experience; do not assume a match from a keyword alone.
 
 Do not assume a posting is remote merely because a search result says "remote." Confirm geographic eligibility and any required office visits, travel, or hybrid expectations in the posting.
 
@@ -37,29 +41,37 @@ Configure comparable searches on Indeed, Dice, Monster, and ZipRecruiter. Use Gl
 
 Search syntax differs between job boards. Treat the following as keyword/title concepts and adapt them to each site's supported search syntax; do not assume every site accepts Boolean operators.
 
-### A — Direct .NET roles
+### A — Direct .NET / C# roles
 
-- Titles: Senior .NET Developer, Senior C# Developer, Senior Software Developer.
+- Potential titles: .NET Developer, C# Developer, Software Developer, Software Engineer, Application Developer, Senior or Lead variants.
 - Keywords: C#, .NET, ASP.NET Core, .NET Core.
-- Highest-priority search family.
+- Highest-priority search family, but do not rely on title matching alone.
 
-### B — Backend software engineering
+### B — Backend and API development
 
-- Titles/phrases: Senior Backend Engineer, Senior Backend Developer, Senior Software Engineer.
-- Keywords: C#, .NET, ASP.NET Core.
-- Include only when .NET/C# is a primary technology, not a minor or incidental requirement.
+- Potential titles: Backend Engineer/Developer, API Developer/Engineer, Services Engineer, Software Engineer.
+- Keywords: C#, .NET, ASP.NET Core, REST APIs, web services, microservices where relevant.
+- Include roles where backend implementation is central and .NET/C# is a substantial part of the required skills.
 
-### C — Enterprise application development
+### C — Enterprise and business application development
 
-- Keywords: C#, .NET, SQL Server, Azure, APIs, integration, messaging.
-- Look for business applications, data-intensive systems, backend services, and application integration.
-- Do not let a long list of optional technologies obscure the requirement that C#/.NET be central to the role.
+- Potential titles: Application Developer/Engineer, Enterprise Application Developer, Business Systems Developer, Software Engineer, Systems Developer.
+- Keywords: C#, .NET, SQL Server, Azure, APIs, integration, messaging, data access.
+- Look for internal/business applications, data-intensive systems, workflow systems, and application integration.
 
-### D — Broader senior software engineering
+### D — Systems, integration, and platform-adjacent development
 
-- Titles: Senior Software Engineer, Senior Software Developer.
-- Pair the title search with C#/.NET keywords or inspect the technology requirements carefully.
-- Purpose: catch relevant roles whose titles do not explicitly mention .NET without turning the search into an unrestricted software-engineering search.
+- Potential titles: Integration Engineer/Developer, Systems Engineer/Developer, Platform Engineer, Technical Lead (individual contributor).
+- Keywords: C#, .NET, SQL Server, Azure, service integration, messaging, ETL/data movement, authentication/authorization, enterprise systems.
+- Inspect responsibilities carefully. Exclude infrastructure-only, operations-only, or support-only roles when application development is not a meaningful part of the work.
+
+### E — Broad software engineering titles
+
+- Potential titles: Software Engineer, Software Developer, Product Engineer, Senior Software Engineer, Senior Software Developer, Lead Software Engineer.
+- Pair broad titles with C#/.NET and relevant supporting skills, or inspect the full requirements list.
+- Purpose: catch relevant roles whose title does not identify the technology, without treating every software engineering vacancy as a match.
+
+The same title can describe very different jobs. Search broadly enough to discover postings, then assess the actual responsibilities and required/preferred qualifications. Do not create a separate alert for every title variation; combine where the job board supports it and keep the total number of searches manageable.
 
 Avoid creating many nearly identical alerts. Start with these four search families and refine them from observed results.
 
@@ -120,6 +132,8 @@ After the source comparison, use observed friction to choose the next small incr
 
 The existing manual inbox remains useful. Do not add fields, importers, or automation solely because they appear on this list. Confirm the recurring need first.
 
-## 8. Open question
+## 8. Search interpretation
 
-Confirm whether the search should include Senior Software Engineer / Senior Software Developer postings whenever C#/.NET is a primary technology, even if .NET is not in the title. The search plan recommends including them to avoid missing relevant roles, but the user's explicit preference on this boundary has not yet been recorded.
+The user has confirmed that the title itself is not a meaningful filter. The actual responsibilities and the complete required/preferred skills list matter more. Keep title coverage broad and use the skills and duties to determine relevance.
+
+Do not turn this into an indiscriminate search for every software role. The practical filter is whether the posting's core work and qualification list overlap materially with the user's demonstrated experience and target constraints.
