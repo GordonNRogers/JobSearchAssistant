@@ -1,7 +1,7 @@
 # JobSearchAssistant Architecture
 
 **Status:** Opportunity inbox deployed as a local Windows Service; database backup/restore is automated, but failure-triggered rollback remains untested
-**Last updated:** 2026-11-20
+**Last updated:** 2026-11-21
 
 ## 1. Architectural objective
 
@@ -171,13 +171,28 @@ These checks do not establish that the combined deployment rollback path has bee
 
 ## 10. Future capabilities and boundaries
 
-Potential future workflows include candidate profile management, deterministic evaluation, optional local Ollama-assisted assessment, application tracking, reporting/export, and permitted source adapters.
+Potential future workflows include candidate profile management, deterministic evaluation, optional local Ollama-assisted assessment, application tracking, reporting/export, permitted source adapters, and a user-driven browser capture companion.
 
 Keep deterministic rules authoritative for explicit constraints and known data. Treat AI output as untrusted, validate it, retain evidence and evaluator metadata, and keep the user responsible for consequential decisions.
 
-Do not add scraping frameworks, plugin discovery, event buses, distributed messaging, multi-agent orchestration, or remote services without a demonstrated requirement.
+Do not add scraping frameworks, plugin discovery, event buses, distributed messaging, multi-agent orchestration, or remote services without a demonstrated requirement. The Glassdoor HTTP experiment is closed as a no-go for automated retrieval without express written authorization. It does not justify an IWebScraper, a Glassdoor scraper, or generalized scraping infrastructure.
 
-## 11. Decisions still deferred
+## 11. Optional browser capture companion (not implemented)
+
+A browser extension may eventually reduce context switching without becoming a job-board scraper. The conservative design is a small popup or side panel that:
+
+- Reads the active tab URL only after an explicit user action, to populate the source URL.
+- Presents a local capture form for the user to enter employer, title, and any other details manually.
+- Submits the user-confirmed record to a narrow local intake endpoint on 127.0.0.1.
+- Creates a draft for review; it does not silently save an opportunity.
+
+For Glassdoor, do not have the extension inspect the page DOM, read selected page text, monitor the clipboard, inject a content script, or collect data in the background without express written permission. Even if the user highlights text and clicks an extension button, the extension still programmatically reads and transfers website content; user initiation is a meaningful distinction but does not establish that this activity is permitted under Glassdoor's terms. A popup/side panel can avoid switching to a separate application page, but it cannot make automated extraction permissible.
+
+A user could manually copy selected text and paste it into an extension popup while remaining on the Glassdoor tab. This is more convenient than navigating to the JobSearchAssistant page, but it remains copying Glassdoor content into another application and does not resolve the separate content-use restrictions. Keep the capture form usable with manually entered fields and a Glassdoor URL even when no posting text is transferred.
+
+The extension and local intake API are future ideas only. No extension, endpoint, browser permission, or draft workflow is implemented. Before implementation, verify the browser extension's permission model, secure local-origin communication, request-forgery protections, and Glassdoor's applicable terms. Do not expose the local service beyond loopback.
+
+## 12. Decisions still deferred
 
 - Candidate profile and preference editing workflow.
 - Cross-URL similarity detection.

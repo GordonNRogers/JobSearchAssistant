@@ -1,7 +1,7 @@
 # JobSearchAssistant Implementation Plan
 
 **Status:** Opportunity inbox implemented and deployed; database backup and rollback are implemented, with operational recovery validation still open
-**Last updated:** 2026-11-20
+**Last updated:** 2026-11-21
 
 ## Delivery rule
 
@@ -124,6 +124,28 @@ Only proceed after capture, profile data, and deterministic behavior are dependa
 - Respect terms, rate limits, and access controls.
 
 **Exit condition:** An integration demonstrably saves time or improves coverage enough to justify maintenance.
+
+## Step 8 — Glassdoor HTTP retrieval (closed — no-go)
+
+The separate experiment on experiment/glassdoor-http-scraping is closed. Anonymous HTTP requests returned a Cloudflare managed challenge (HTTP 403), and Glassdoor's current Terms of Use require express written permission for automated scraping/mining. No current self-service API or authorized feed for this use case was identified.
+
+Do not implement a Glassdoor scraper, IWebScraper abstraction for this purpose, browser automation, challenge bypass, cookie replay, or automated page-content extraction without express written authorization. See docs/experiments/GlassdoorHttpScraping.md for the evidence and decision.
+
+**Exit condition:** Closed. Reopen only if Glassdoor provides written authorization or a documented integration that expressly covers the intended access and data use.
+
+## Step 9 — Consider a user-driven browser capture companion (deferred)
+
+This is a convenience feature, not a scraping workaround. If capture friction proves significant, consider a small browser-extension popup or side panel that:
+
+- Reads the active tab URL only after an explicit click.
+- Displays a local capture form while the user remains on the job-board tab.
+- Lets the user manually enter employer, title, location, and personal notes.
+- Optionally accepts text the user manually copies and pastes into the popup, subject to the source site's content-use terms.
+- Submits a draft to a loopback-only JobSearchAssistant intake endpoint for review before saving.
+
+For Glassdoor, do not implement DOM inspection, automatic selected-text transfer, clipboard monitoring, injected scripts, or background content collection without express written permission. A click-to-read selection extension still programmatically extracts and transfers website content; user initiation does not itself establish permission. The popup can remove the need to switch to a separate JobSearchAssistant page, but it cannot remove the separate content-use question.
+
+**Exit condition:** Build only after the user confirms that the convenience is worth a separate extension project, the local intake endpoint is designed securely, and source-site terms have been reviewed for the exact capture behavior.
 
 ## Stop / defer conditions
 

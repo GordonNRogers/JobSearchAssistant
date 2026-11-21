@@ -1,7 +1,7 @@
 # JobSearchAssistant Requirements
 
 **Status:** Local opportunity inbox implemented and deployed; additional job-search workflows remain planned
-**Last updated:** 2026-11-20
+**Last updated:** 2026-11-21
 **Primary objective:** Make a personal job search more efficient and better informed.
 
 ## 1. Problem statement
@@ -135,14 +135,14 @@ Do not infer sensitive personal characteristics or store confidential informatio
 - **Security:** Bind the production service to loopback; do not expose it to the LAN or internet.
 - **Maintainability:** Keep responsibilities separated without creating a distributed system.
 - **Cost:** No mandatory paid API or subscription for the current version.
-- **Security/privacy:** Do not store account passwords or automate login to job sites.
+- **Security/privacy:** Do not store account passwords or automate login to job sites without a separately reviewed, explicit design. Treat browser-session cookies and other authentication artifacts as credentials; never log, commit, or store them in plaintext.
 
 The deployment script creates and verifies a pre-deployment SQLite backup before updating an existing installation. The DatabaseTool restore operation requires the service and other database connections to be stopped. The combined deployment rollback path is implemented but has not yet been failure-injection-tested.
 
 ## 7. Explicit non-goals for the current increment
 
 - AI evaluation, fit scoring, or candidate-profile matching.
-- Job-board scraping, scheduled collection, or source integrations.
+- Production job-board scraping, scheduled collection, or unattended source integrations. The closed Glassdoor HTTP experiment does not change the current application's supported scope. A user-driven browser capture companion may be considered separately, subject to source-site terms and explicit user review.
 - Application tracking, contacts, interviews, or follow-up reminders.
 - Dashboards and elaborate reporting.
 - Automatically submitting applications or answering employer screening questions.
@@ -194,7 +194,23 @@ Evaluate the tool by whether it reduces time spent collecting and reviewing post
 
 Do not treat lines of code, number of integrations, model complexity, or number of captured listings as success by themselves.
 
-## 10. Open decisions
+## 10. Closed experiment — Glassdoor HTTP retrieval
+
+The Glassdoor HTTP retrieval experiment is closed as **no-go for automated retrieval without express written authorization**. Anonymous HTTP requests returned a Cloudflare managed challenge (HTTP 403); no job content was retrieved. Glassdoor's current Terms of Use, revised July 1, 2026, require express written permission for software/automated-agent scraping or mining and prohibit circumventing security features. No current, documented self-service API or authorized feed for the saved Recruiter listings was identified. See docs/experiments/GlassdoorHttpScraping.md for evidence and sources.
+
+Do not implement a Glassdoor scraper, browser automation, challenge bypass, cookie replay, or page-content extraction without authorization. This is an engineering scope decision, not legal advice.
+
+## 11. Future option — user-driven browser capture
+
+A browser extension may reduce context switching without automatically extracting Glassdoor content. The conservative version is a popup or side panel that reads the active tab URL after a deliberate user action, then displays a JobSearchAssistant capture form. The user manually enters employer/title and other details and explicitly submits a draft to a local intake endpoint. This lets the user remain on the Glassdoor tab rather than navigating to the application page.
+
+A user may also manually copy selected text and paste it into the popup. That avoids switching pages but is still copying Glassdoor content into another application; the Terms of Use contain content-use restrictions separate from the scraping prohibition. Do not assume manual copying or personal use resolves those restrictions.
+
+Do not have a Glassdoor-specific extension inspect page DOM, automatically read selected text, monitor clipboard contents, inject page scripts, or run background content collection without express written permission. A click-to-read selection workflow is more user-directed than unattended scraping, but the extension still programmatically extracts/transfers page content; the current terms do not provide a clear safe harbor for it. Obtain clarification/permission before implementing that behavior.
+
+Potential intake contract: source URL, employer, job title, location, user-entered notes, optional user-supplied posting text, and capture timestamp. Intake should create a reviewable draft rather than silently save an opportunity. This is a proposal only; no extension or intake endpoint exists.
+
+## 11. Open decisions
 
 Resolve these through small working prototypes rather than speculative design:
 

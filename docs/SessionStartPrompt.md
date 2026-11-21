@@ -92,7 +92,7 @@ The intended direction is incremental:
 5. Evaluate optional local Ollama assistance only after deterministic data and workflows are dependable.
 6. Add legitimate source integrations selectively when they demonstrably save time.
 
-The current implementation does **not** include AI evaluation, fit scoring, candidate-profile matching, job-board scraping, scheduled collection, application tracking, automated application submission, or multi-agent orchestration.
+The current implementation does **not** include AI evaluation, fit scoring, candidate-profile matching, job-board scraping, scheduled collection, browser extension capture, a local intake API for extensions, application tracking, automated application submission, or multi-agent orchestration.
 
 Do not implement planned capabilities as though they already exist. Do not add complexity merely because it appears on the roadmap.
 
@@ -106,14 +106,31 @@ Do not implement planned capabilities as though they already exist. Do not add c
 - Deterministic validation and explicit user constraints take precedence over AI suggestions.
 - AI output, if introduced, is untrusted input: validate schemas, retain evidence/provenance, distinguish unknowns from matches, and keep consequential decisions with the user.
 - Keep personal candidate data local by default. Do not upload resumes or profile data to external services without explicit user approval.
-- Do not store account passwords or automate logging into job sites.
+- Do not store account passwords or automate logging into job sites without a separately reviewed, explicit design. Treat session cookies and authentication artifacts as credentials.
 - Respect source-site terms, access controls, and rate limits.
 - Avoid paid APIs/cloud dependencies unless the benefit is demonstrated and the user agrees.
-- Do not introduce scraping frameworks, plugin systems, message brokers, microservices, Kubernetes, or frontend frameworks without a concrete requirement.
+- Do not introduce scraping frameworks, plugin systems, message brokers, microservices, Kubernetes, or frontend frameworks without a concrete requirement. The Glassdoor HTTP experiment is closed as a no-go for automated retrieval absent express written authorization; it does not justify an `IWebScraper` abstraction or scraping infrastructure.
 - Do not mark plan items complete without implementation and verification evidence.
 - Do not claim a build, test, deployment, backup, restore, or health check succeeded unless it was actually run and its result observed.
 - Do not commit, push, merge, or deploy unless explicitly asked. When asked to do so, report exactly what was done and the resulting commit/branch.
 - Do not make unrelated changes or rewrite documentation wholesale when a focused correction is sufficient.
+
+## Closed experiment — Glassdoor HTTP retrieval
+
+The isolated experiment branch is `experiment/glassdoor-http-scraping`. Keep it separate from `main`; do not merge it unless explicitly requested.
+
+The experiment is closed as **no-go for automated Glassdoor retrieval under current evidence**:
+
+- PowerShell's `Invoke-WebRequest` alias and native `curl.exe` both received Cloudflare challenge content. Native `curl.exe` returned HTTP 403 with `Cf-Mitigated: challenge` and `Server: cloudflare`; no job content was retrieved.
+- Glassdoor's current Terms of Use, revised July 1, 2026, require express written permission for software/automated-agent scraping or mining and prohibit attempts to circumvent security features.
+- Current secondary reporting of Glassdoor's Help Center article says Glassdoor no longer supports API partnerships. The Help Center article body did not render in the research browser, so record this as secondary-source reporting, not direct verification.
+- No current documented self-service API or authorized feed for the user's saved Recruiter listings was identified.
+
+Do not implement a Glassdoor scraper, browser automation, challenge bypass, or cookie-replay workaround. Reopen only if Glassdoor supplies express written authorization covering the intended access/data use or a documented integration expressly supports this use case.
+
+Practical workflow: retain manual opportunity capture. Prefer the employer's own career page or ATS-hosted posting as the source URL/text when available. Otherwise, use the Glassdoor URL as a reference and enter relevant details and personal notes manually. A browser-extension popup or side panel is a possible future convenience: it would open a local capture form beside the Glassdoor tab, read only the active tab URL after an explicit user action, and let the user enter fields manually. The proposed workflow is not implemented. A workflow that reads selected Glassdoor text from the page and transfers it automatically is still software-mediated extraction; explicit user selection does not establish that Glassdoor permits it. Do not implement page-DOM extraction, selected-text transfer, clipboard monitoring, or background content scripts for Glassdoor without permission. Treat copying the full Glassdoor posting into another application as a separate content-use question; manual entry does not automatically resolve all terms restrictions.
+
+See `docs/experiments/GlassdoorHttpScraping.md` for the HTTP evidence, terms research, sources, and decision. No application code, build, or tests were part of this experiment.
 
 ## Relationship to JobSearch2026
 
