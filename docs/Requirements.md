@@ -135,14 +135,14 @@ Do not infer sensitive personal characteristics or store confidential informatio
 - **Security:** Bind the production service to loopback; do not expose it to the LAN or internet.
 - **Maintainability:** Keep responsibilities separated without creating a distributed system.
 - **Cost:** No mandatory paid API or subscription for the current version.
-- **Security/privacy:** Do not store account passwords or automate login to job sites.
+- **Security/privacy:** Do not store account passwords or automate login to job sites without a separately reviewed, explicit design. Treat browser-session cookies and other authentication artifacts as credentials; never log, commit, or store them in plaintext.
 
 The deployment script creates and verifies a pre-deployment SQLite backup before updating an existing installation. The DatabaseTool restore operation requires the service and other database connections to be stopped. The combined deployment rollback path is implemented but has not yet been failure-injection-tested.
 
 ## 7. Explicit non-goals for the current increment
 
 - AI evaluation, fit scoring, or candidate-profile matching.
-- Job-board scraping, scheduled collection, or source integrations.
+- Production job-board scraping, scheduled collection, or unattended source integrations. A narrowly scoped Glassdoor HTTP retrieval experiment is tracked separately and does not change the current application's supported scope.
 - Application tracking, contacts, interviews, or follow-up reminders.
 - Dashboards and elaborate reporting.
 - Automatically submitting applications or answering employer screening questions.
@@ -194,7 +194,20 @@ Evaluate the tool by whether it reduces time spent collecting and reviewing post
 
 Do not treat lines of code, number of integrations, model complexity, or number of captured listings as success by themselves.
 
-## 10. Open decisions
+## 10. Experimental work — Glassdoor HTTP retrieval
+
+A separate, time-boxed experiment is exploring retrieval of job details from a user-provided Glassdoor Recruiter job-view URL. This is research, not an approved production feature or a commitment to support Glassdoor long term.
+
+- Use `curl.exe` from PowerShell to inspect HTTP behavior and save diagnostic responses. `curl` is a diagnostic/prototyping tool only; the application implementation, if viable, will use .NET `HttpClient`.
+- First establish anonymous behavior: HTTP status, redirect chain/final URL, response headers, content type, and response body. Determine whether the response contains job data, a sign-in page, an access challenge, or a client-rendered shell.
+- The user's browser currently displays the supplied URL, but its authentication may be cached. Browser success therefore does not establish anonymous accessibility.
+- If authentication is needed, investigate the minimum viable session approach only after observing the anonymous response. Cookies are sensitive credentials. Do not place them in source control, command history, logs, diagnostic artifacts, or plaintext configuration.
+- Design for site-specific retrieval strategies. The proposed application boundary is `IWebScraper`, with a Glassdoor-specific initial implementation and a selection mechanism that can support additional site implementations. Avoid premature plugin discovery or a generalized scraping framework.
+- Keep HTTP session/authentication concerns separate from job-page parsing. Redirect handling, cookie handling, session persistence, and authentication renewal are unresolved design details, not implemented capabilities.
+- Respect Glassdoor's terms, access controls, and rate limits. Stop if access requires bypassing a challenge or other access control; do not attempt circumvention.
+- No implementation, authentication flow, or successful extraction is claimed yet. The next evidence is the anonymous `curl.exe` response and inspection of the returned HTML.
+
+## 11. Open decisions
 
 Resolve these through small working prototypes rather than speculative design:
 
