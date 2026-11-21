@@ -1,7 +1,7 @@
 # JobSearchAssistant Implementation Plan
 
 **Status:** Opportunity inbox implemented and deployed; database backup and rollback are implemented, with operational recovery validation still open
-**Last updated:** 2026-11-20
+**Last updated:** 2026-11-21
 
 ## Delivery rule
 
