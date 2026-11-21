@@ -125,22 +125,27 @@ Only proceed after capture, profile data, and deterministic behavior are dependa
 
 **Exit condition:** An integration demonstrably saves time or improves coverage enough to justify maintenance.
 
-## Step 8 — Investigate Glassdoor HTTP retrieval (separate experiment)
+## Step 8 — Glassdoor HTTP retrieval (closed — no-go)
 
-This experiment is isolated on `experiment/glassdoor-http-scraping`; it is not a production application increment and does not change the current deployed feature set.
+The separate experiment on experiment/glassdoor-http-scraping is closed. Anonymous HTTP requests returned a Cloudflare managed challenge (HTTP 403), and Glassdoor's current Terms of Use require express written permission for automated scraping/mining. No current self-service API or authorized feed for this use case was identified.
 
-### Planned sequence
+Do not implement a Glassdoor scraper, IWebScraper abstraction for this purpose, browser automation, challenge bypass, cookie replay, or automated page-content extraction without express written authorization. See docs/experiments/GlassdoorHttpScraping.md for the evidence and decision.
 
-1. Use `curl.exe` from PowerShell to request the user-provided Glassdoor Recruiter job-view URL without authentication.
-2. Capture and inspect the status code, redirect chain/final URL, response headers, content type, and HTML body. Keep any response artifacts free of session secrets and personal data.
-3. Determine whether the job details are present in the response, whether the page is a JavaScript-rendered shell, or whether Glassdoor requires authentication or returns an access challenge.
-4. If authentication is required, investigate session handling separately. Do not assume username/password automation is appropriate; browser cookies may be cached, and session cookies must be protected as credentials.
-5. If retrieval is viable and permitted, implement the equivalent request using .NET `HttpClient` and introduce a small `IWebScraper` contract with an initial Glassdoor-specific implementation.
-6. Keep transport/session concerns separate from site-specific extraction. Add further site-specific strategies only when real target URLs demonstrate the need.
+**Exit condition:** Closed. Reopen only if Glassdoor provides written authorization or a documented integration that expressly covers the intended access and data use.
 
-`curl.exe` is a diagnostic tool, not a production dependency. No extraction or authentication implementation is complete. Do not mark this step complete until the response has been inspected and a repeatable .NET implementation has been tested. Stop if access requires bypassing a challenge or other access control.
+## Step 9 — Consider a user-driven browser capture companion (deferred)
 
-**Exit condition:** Demonstrate a permitted, repeatable `HttpClient` retrieval and extraction for the supplied Glassdoor test case, with tests for the observed response variants. If that is not viable, document the limitation and stop rather than building browser automation or speculative infrastructure.
+This is a convenience feature, not a scraping workaround. If capture friction proves significant, consider a small browser-extension popup or side panel that:
+
+- Reads the active tab URL only after an explicit click.
+- Displays a local capture form while the user remains on the job-board tab.
+- Lets the user manually enter employer, title, location, and personal notes.
+- Optionally accepts text the user manually copies and pastes into the popup, subject to the source site's content-use terms.
+- Submits a draft to a loopback-only JobSearchAssistant intake endpoint for review before saving.
+
+For Glassdoor, do not implement DOM inspection, automatic selected-text transfer, clipboard monitoring, injected scripts, or background content collection without express written permission. A click-to-read selection extension still programmatically extracts and transfers website content; user initiation does not itself establish permission. The popup can remove the need to switch to a separate JobSearchAssistant page, but it cannot remove the separate content-use question.
+
+**Exit condition:** Build only after the user confirms that the convenience is worth a separate extension project, the local intake endpoint is designed securely, and source-site terms have been reviewed for the exact capture behavior.
 
 ## Stop / defer conditions
 
