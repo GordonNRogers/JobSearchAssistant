@@ -1,7 +1,7 @@
 # JobSearchAssistant Requirements
 
 **Status:** Local opportunity inbox implemented and deployed; additional job-search workflows remain planned
-**Last updated:** 2026-11-20
+**Last updated:** 2026-11-21
 **Primary objective:** Make a personal job search more efficient and better informed.
 
 ## 1. Problem statement
