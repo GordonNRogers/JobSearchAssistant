@@ -41,7 +41,6 @@ The target is an individual's local workflow. This is not intended to be a comme
 - Projects: `JobSearchAssistant.Web`, `JobSearchAssistant.Tests`, and `JobSearchAssistant.DatabaseTool`.
 
 .NET 11 and EF Core 11 are Standard Term Support (STS), not Long Term Support (LTS). Keep the SDK and EF packages on supported servicing versions and plan an upgrade before support ends. Confirm the installed Visual Studio version supports the .NET 11 SDK and tooling.
-.NET 11 and EF Core 11 are STS releases. Keep the SDK and packages on supported servicing versions and plan an upgrade before support ends.
 
 ## 4. Core workflows
 
@@ -149,8 +148,6 @@ The deployment script creates and verifies a pre-deployment SQLite backup before
 - Automatically submitting applications or answering employer screening questions.
 - A public job board, recruiter marketplace, or multi-user SaaS.
 - Complex multi-agent orchestration, microservices, message brokers, Kubernetes, or cloud hosting.
-- Complex multi-agent orchestration.
-- Microservices, message brokers, Kubernetes, or cloud hosting.
 - A JavaScript-heavy frontend framework.
 
 ## 8. Delivery priorities
@@ -167,15 +164,7 @@ The deployment script creates and verifies a pre-deployment SQLite backup before
 - Confirmed opportunity deletion through a POST handler.
 - Automated integration tests for comment persistence and deletion.
 
-Latest verified result: solution build succeeded; all 11 tests passed. The application was published and deployed as a Windows Service. The deployment health check returned HTTP 200, and the user confirmed the application looked correct.
-- ASP.NET Core Razor Pages application targeting .NET 11.
-- Manual capture of source URL and original job-description text.
-- Optional employer/title and automatic capture timestamp.
-- EF Core 11 Code First model and SQLite persistence.
-- Newest-first opportunity list and detail view.
-- Duplicate URL warning and explicit confirmation.
-- Opportunity comments and deletion with confirmation.
-- Automated integration tests.
+Latest recorded verification: the solution build succeeded and all 11 tests passed. The application was published and deployed as a Windows Service; the deployment health check returned HTTP 200, and the user confirmed the application looked correct. These are recorded results, not a claim that the current checkout has been reverified.
 
 ### Delivered — local deployment and database utility
 
