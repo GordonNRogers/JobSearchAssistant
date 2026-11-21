@@ -109,6 +109,7 @@ These results describe the recorded verification run; rerun the commands above a
 
 ## Documentation
 
+- [ChatGPT Session Start Prompt](docs/SessionStartPrompt.md) — repository-specific instructions and current project baseline for starting a new ChatGPT session.
 - [Requirements](docs/Requirements.md) — product needs, workflows, scope, and acceptance criteria.
 - [Architecture](docs/Architecture.md) — technical structure, persistence, hosting, backup, and deployment.
 - [Implementation Plan](docs/ImplementationPlan.md) — delivered increments, remaining work, and exit conditions.
