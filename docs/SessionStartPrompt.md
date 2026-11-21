@@ -109,29 +109,28 @@ Do not implement planned capabilities as though they already exist. Do not add c
 - Do not store account passwords or automate logging into job sites without a separately reviewed, explicit design. Treat session cookies and authentication artifacts as credentials.
 - Respect source-site terms, access controls, and rate limits.
 - Avoid paid APIs/cloud dependencies unless the benefit is demonstrated and the user agrees.
-- Do not introduce scraping frameworks, plugin systems, message brokers, microservices, Kubernetes, or frontend frameworks without a concrete requirement. The current isolated Glassdoor experiment may justify a small `IWebScraper` abstraction and site-specific implementation, but not a generalized scraping framework.
+- Do not introduce scraping frameworks, plugin systems, message brokers, microservices, Kubernetes, or frontend frameworks without a concrete requirement. The Glassdoor HTTP experiment is closed as a no-go for automated retrieval absent express written authorization; it does not justify an `IWebScraper` abstraction or scraping infrastructure.
 - Do not mark plan items complete without implementation and verification evidence.
 - Do not claim a build, test, deployment, backup, restore, or health check succeeded unless it was actually run and its result observed.
 - Do not commit, push, merge, or deploy unless explicitly asked. When asked to do so, report exactly what was done and the resulting commit/branch.
 - Do not make unrelated changes or rewrite documentation wholesale when a focused correction is sufficient.
 
-## Current isolated experiment — Glassdoor HTTP retrieval
+## Closed experiment — Glassdoor HTTP retrieval
 
-The active experiment branch is `experiment/glassdoor-http-scraping` (created from the previous experiment branch after correcting the target site from ZipRecruiter to Glassdoor). Keep this work isolated from `main`.
+The isolated experiment branch is `experiment/glassdoor-http-scraping`. Keep it separate from `main`; do not merge it unless explicitly requested.
 
-The user supplied a Glassdoor Recruiter job-view URL that displays in their normal browser; browser authentication may be cached, so this does not prove anonymous HTTP access.
+The experiment is closed as **no-go for automated Glassdoor retrieval under current evidence**:
 
-Agreed direction:
+- PowerShell's `Invoke-WebRequest` alias and native `curl.exe` both received Cloudflare challenge content. Native `curl.exe` returned HTTP 403 with `Cf-Mitigated: challenge` and `Server: cloudflare`; no job content was retrieved.
+- Glassdoor's current Terms of Use, revised July 1, 2026, require express written permission for software/automated-agent scraping or mining and prohibit attempts to circumvent security features.
+- Current secondary reporting of Glassdoor's Help Center article says Glassdoor no longer supports API partnerships. The Help Center article body did not render in the research browser, so record this as secondary-source reporting, not direct verification.
+- No current documented self-service API or authorized feed for the user's saved Recruiter listings was identified.
 
-- Use `curl.exe` in PowerShell to diagnose HTTP behavior: anonymous response, redirects/final URL, headers, content type, and HTML.
-- `curl.exe` is a diagnostic tool only. Any application implementation will use .NET `HttpClient`.
-- Design for site-specific retrieval strategies. Start with a small `IWebScraper` contract and an initial Glassdoor implementation if the HTTP investigation proves viable.
-- Keep session/authentication management separate from parsing. Cookie persistence, redirects, login, and session renewal are unresolved and must be driven by observed behavior.
-- Never expose or commit credentials, cookies, session identifiers, or authenticated response artifacts. Do not bypass challenges or access controls; respect site terms and rate limits.
+Do not implement a Glassdoor scraper, browser automation, challenge bypass, or cookie-replay workaround. Reopen only if Glassdoor supplies express written authorization covering the intended access/data use or a documented integration expressly supports this use case.
 
-Initial anonymous HTTP diagnostics have been completed. Both PowerShell's `Invoke-WebRequest` alias (invoked by `curl`) and native `curl.exe` received a Cloudflare security challenge. The native `curl.exe` response was HTTP 403 and included `Cf-Mitigated: challenge`, `Server: cloudflare`, and a Glassdoor security-interstitial title. No job content was retrieved; job-related strings found in the challenge HTML are not evidence of extraction.
+Practical workflow: retain manual opportunity capture. Prefer the employer's own career page or ATS-hosted posting as the source URL/text when available. Otherwise, use the Glassdoor URL as a reference and enter relevant details and personal notes manually. Treat copying the full Glassdoor posting into another application as a separate content-use question; manual entry does not automatically resolve all terms restrictions.
 
-Do not spend time tweaking headers or attempting to bypass Cloudflare, CAPTCHA, or other access controls. Authentication and automated-request access remain separate, unresolved questions. No application implementation, build, or test has been performed. The next step is to decide whether to investigate an authorized Glassdoor data-access route or treat Glassdoor as a manual-capture source. See `docs/experiments/GlassdoorHttpScraping.md` for the evidence and assessment.
+See `docs/experiments/GlassdoorHttpScraping.md` for the HTTP evidence, terms research, sources, and decision. No application code, build, or tests were part of this experiment.
 
 ## Relationship to JobSearch2026
 
