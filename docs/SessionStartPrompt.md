@@ -105,7 +105,8 @@ The user has so far found relatively few opportunities while prioritizing resume
 
 Initial target profile:
 - C#/.NET/ASP.NET Core as primary technology.
-- Senior Software Developer / Senior Software Engineer / Senior .NET Developer / Senior C# Developer roles.
+- Broad title coverage: Software Engineer/Developer, .NET/C# Developer, Backend Engineer/Developer, Application Developer/Engineer, Systems Developer/Engineer, Integration Engineer/Developer, API Developer/Engineer, and individual-contributor Technical Lead roles, including senior variants.
+- Job title is a discovery hint, not a hard qualification filter. The responsibilities and complete required/preferred skills list matter more than the title.
 - Fully remote roles open to U.S.-based candidates.
 - Full-time preferred; contract-to-hire acceptable; strictly contract is lower priority.
 - Supporting technologies include SQL Server, Azure, APIs, backend services, messaging, and integration.
@@ -117,7 +118,7 @@ Use Glassdoor manually as a benchmark. Configure comparable searches and alerts 
 
 See `docs/JobSearchWorkflow.md` for the operating procedure. Do not treat the workflow as implemented application functionality. Do not add code just to count results; a simple manual tally is enough. Do not automate Glassdoor retrieval or page-content extraction; the closed experiment and its boundaries remain in force.
 
-The user's preference on including Senior Software Engineer / Senior Software Developer roles when C#/.NET is primary but absent from the title has not yet been explicitly confirmed. Keep this as an open search-scope question rather than treating it as a settled hard rule.
+The user has explicitly confirmed that title matters less than the responsibilities and the full required/preferred skills list. Keep title coverage broad and judge fit from substantive overlap with demonstrated experience and target constraints. Do not require ".NET" or "Senior" in the title.
 
 ## Engineering and collaboration rules
 
