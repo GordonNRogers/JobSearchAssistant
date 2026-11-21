@@ -129,7 +129,9 @@ Agreed direction:
 - Keep session/authentication management separate from parsing. Cookie persistence, redirects, login, and session renewal are unresolved and must be driven by observed behavior.
 - Never expose or commit credentials, cookies, session identifiers, or authenticated response artifacts. Do not bypass challenges or access controls; respect site terms and rate limits.
 
-First action: perform an anonymous `curl.exe` request and inspect the response before designing or implementing authentication. No scraping implementation or successful extraction has been demonstrated yet. See `docs/experiments/GlassdoorHttpScraping.md` for the experiment record.
+Initial anonymous HTTP diagnostics have been completed. Both PowerShell's `Invoke-WebRequest` alias (invoked by `curl`) and native `curl.exe` received a Cloudflare security challenge. The native `curl.exe` response was HTTP 403 and included `Cf-Mitigated: challenge`, `Server: cloudflare`, and a Glassdoor security-interstitial title. No job content was retrieved; job-related strings found in the challenge HTML are not evidence of extraction.
+
+Do not spend time tweaking headers or attempting to bypass Cloudflare, CAPTCHA, or other access controls. Authentication and automated-request access remain separate, unresolved questions. No application implementation, build, or test has been performed. The next step is to decide whether to investigate an authorized Glassdoor data-access route or treat Glassdoor as a manual-capture source. See `docs/experiments/GlassdoorHttpScraping.md` for the evidence and assessment.
 
 ## Relationship to JobSearch2026
 
