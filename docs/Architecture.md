@@ -175,9 +175,40 @@ Potential future workflows include candidate profile management, deterministic e
 
 Keep deterministic rules authoritative for explicit constraints and known data. Treat AI output as untrusted, validate it, retain evidence and evaluator metadata, and keep the user responsible for consequential decisions.
 
-Do not add scraping frameworks, plugin discovery, event buses, distributed messaging, multi-agent orchestration, or remote services without a demonstrated requirement.
+Do not add scraping frameworks, plugin discovery, event buses, distributed messaging, multi-agent orchestration, or remote services without a demonstrated requirement. The separate Glassdoor HTTP experiment is intentionally narrower: a small `IWebScraper` contract, a site-specific implementation, and shared `HttpClient` infrastructure only as evidence requires.
 
-## 11. Decisions still deferred
+## 11. Experimental architecture — Glassdoor HTTP retrieval
+
+This work is isolated on the `experiment/glassdoor-http-scraping` branch. It is not part of the deployed application and must not be described as an implemented product capability.
+
+### Intended shape
+
+- **`IWebScraper`** is the application-facing abstraction for retrieving and extracting job details from a supplied posting URL.
+- **Glassdoor implementation** is the first site-specific scraper, contingent on proving that the supplied Glassdoor Recruiter job-view page can be retrieved and parsed reliably.
+- **Scraper selection** should be based on the target URL/site and allow additional site-specific implementations later. Do not design a plugin marketplace or speculative site knowledge base now.
+- **HTTP transport** uses .NET `HttpClient`. `curl.exe` is for manual diagnostics and request/response inspection, not a runtime dependency.
+- **Session/authentication** is a separate concern from page parsing. A future session abstraction may own cookies and authenticated request state; the scraper should not own credential storage.
+
+### Investigation sequence
+
+1. Request the supplied Glassdoor URL anonymously with `curl.exe`.
+2. Record status, redirect behavior/final URI, relevant response headers, content type, and a safely stored response body.
+3. Inspect whether job data is in the returned HTML or whether the response is a sign-in page, challenge, or JavaScript shell.
+4. Only if required, investigate an authenticated request and the minimum session mechanism needed.
+5. Reproduce any viable request with .NET `HttpClient`, then implement extraction behind `IWebScraper`.
+
+The user can view the URL in a normal browser, but browser authentication may be cached. This does not establish that an anonymous HTTP request will succeed. No HTTP response has yet been captured, no extraction has been demonstrated, and no authentication design has been selected.
+
+### Security and operational constraints
+
+- Treat cookies, session identifiers, and credentials as secrets.
+- Never commit secrets or raw authenticated response artifacts.
+- Do not place cookies in PowerShell command history or diagnostic logs.
+- If persistence is needed, evaluate OS-protected storage (for example, Windows DPAPI) rather than plaintext files; do not implement persistence until the session requirement is demonstrated.
+- Let `HttpClientHandler` handle ordinary redirects and cookie-container behavior where appropriate, but inspect the actual response rather than assuming site behavior.
+- Respect site terms, access controls, and rate limits. Do not bypass CAPTCHA, bot challenges, authentication controls, or other restrictions.
+
+## 12. Decisions still deferred
 
 - Candidate profile and preference editing workflow.
 - Cross-URL similarity detection.
