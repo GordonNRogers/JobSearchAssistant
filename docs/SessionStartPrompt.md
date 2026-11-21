@@ -26,6 +26,7 @@ JobSearchAssistant supports the user's job search; it is not a prerequisite for 
 2. Read, in this order:
    - `README.md`
    - `docs/Requirements.md`
+   - `docs/JobSearchWorkflow.md`
    - `docs/Architecture.md`
    - `docs/ImplementationPlan.md`
 3. Inspect the relevant source files, tests, migrations, and deployment scripts before proposing or changing implementation.
@@ -83,18 +84,40 @@ The complete failure-triggered deployment rollback path has **not** been failure
 
 The product is a personal, single-user, local-first job-opportunity inbox—not a public job board, recruiting marketplace, SaaS product, or autonomous application agent.
 
-The intended direction is incremental:
+The intended direction is incremental, but the current operational priority is improving job discovery before adding more application features:
 
-1. Make capture, persistence, review, and recovery dependable.
-2. Improve URL normalization and conservative duplicate review.
-3. Add a user-controlled candidate profile and deterministic filtering/prioritization.
-4. Add application tracking and useful follow-up/reporting.
-5. Evaluate optional local Ollama assistance only after deterministic data and workflows are dependable.
-6. Add legitimate source integrations selectively when they demonstrably save time.
+1. Use the documented target profile and search families to improve discovery across the job boards already in use.
+2. Treat Glassdoor recommendations as the current qualitative benchmark because they have so far appeared better matched for .NET, senior-level, and remote roles. This is an observation, not yet a measured comparison.
+3. Compare relevant-posting yield and mismatch reasons across sources over an initial two-week period. A manual tally is sufficient; do not build reporting for this experiment.
+4. Use the observed workflow friction to choose the next application increment.
+5. Candidate implementation candidates include source/provenance capture, cross-URL duplicate detection, and deterministic filtering.
+6. Add legitimate alert/import integrations selectively when a source is shown to produce useful opportunities and the integration is permitted.
+7. Evaluate optional local Ollama assistance only after discovery, capture, and deterministic review are dependable and AI addresses a demonstrated bottleneck.
+8. Add application tracking and useful follow-up/reporting when the actual workflow needs them.
 
 The current implementation does **not** include AI evaluation, fit scoring, candidate-profile matching, job-board scraping, scheduled collection, browser extension capture, a local intake API for extensions, application tracking, automated application submission, or multi-agent orchestration.
 
 Do not implement planned capabilities as though they already exist. Do not add complexity merely because it appears on the roadmap.
+
+## Current job-search discovery baseline
+
+The user has so far found relatively few opportunities while prioritizing resume and profile setup. Glassdoor recommendations have appeared better matched than the other sources tried, particularly for .NET, senior-level, and remote positions. Treat this as a qualitative observation until the two-week source comparison is completed.
+
+Initial target profile:
+- C#/.NET/ASP.NET Core as primary technology.
+- Senior Software Developer / Senior Software Engineer / Senior .NET Developer / Senior C# Developer roles.
+- Fully remote roles open to U.S.-based candidates.
+- Full-time preferred; contract-to-hire acceptable; strictly contract is lower priority.
+- Supporting technologies include SQL Server, Azure, APIs, backend services, messaging, and integration.
+- Lower priority: management, primarily production support, and frontend-heavy roles.
+
+The search plan includes direct .NET roles, backend roles where .NET is primary, enterprise application development, and broader senior engineering titles paired with C#/.NET requirements. Board search syntax differs; adapt keyword concepts to each site rather than assuming universal Boolean syntax.
+
+Use Glassdoor manually as a benchmark. Configure comparable searches and alerts on Indeed, Dice, Monster, and ZipRecruiter. Track source volume, genuinely relevant postings, confirmed remote/U.S. eligibility, primary C#/.NET relevance, seniority, postings worth applying to, and mismatch reasons for an initial two-week period.
+
+See `docs/JobSearchWorkflow.md` for the operating procedure. Do not treat the workflow as implemented application functionality. Do not add code just to count results; a simple manual tally is enough. Do not automate Glassdoor retrieval or page-content extraction; the closed experiment and its boundaries remain in force.
+
+The user's preference on including Senior Software Engineer / Senior Software Developer roles when C#/.NET is primary but absent from the title has not yet been explicitly confirmed. Keep this as an open search-scope question rather than treating it as a settled hard rule.
 
 ## Engineering and collaboration rules
 
