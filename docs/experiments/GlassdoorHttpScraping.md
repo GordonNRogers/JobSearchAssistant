@@ -1,6 +1,7 @@
 # Glassdoor HTTP Scraping Experiment
 
 **Status:** Closed — no-go for automated Glassdoor retrieval without express written authorization  
+**Last updated:** 2026-11-21  
 **Branch:** `experiment/glassdoor-http-scraping`  
 **Target:** User-provided Glassdoor Recruiter job-view URL
 
