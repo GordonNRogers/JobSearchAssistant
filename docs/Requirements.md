@@ -116,6 +116,30 @@ Future capability: track application status, dates, notes, contacts, interviews,
 
 Future capability: produce a concise report of newly captured opportunities, high-priority items, items needing review, active applications, and upcoming follow-ups.
 
+### WF-08 — Improve opportunity discovery
+
+Current operational priority: improve the quality and quantity of relevant opportunities found before investing in automated collection or AI evaluation.
+
+Initial search profile:
+
+- Primary technology: C#, .NET, and ASP.NET Core.
+- Titles: search broadly across software engineering/development, .NET/C#, backend, application, systems, integration, API, and individual-contributor technical lead roles, including senior variants. Titles are discovery hints, not hard filters; assess the actual responsibilities and complete required/preferred skills list for substantive overlap with demonstrated experience.
+- Work arrangement: fully remote, with eligibility for a U.S.-based applicant confirmed in the posting.
+- Employment: full-time preferred; contract-to-hire acceptable; strictly contract is lower priority.
+- Relevant supporting technologies: SQL Server, Azure, APIs, backend services, messaging, and integration.
+- Lower-priority roles: management, primarily production support, and frontend-heavy positions.
+
+Glassdoor recommendations have so far appeared better matched than results seen on other job boards, especially for .NET, seniority, and remote work. This is an early qualitative observation, not a measured source comparison. Use Glassdoor as a manual discovery benchmark; automated Glassdoor retrieval remains prohibited by this project's current engineering decision. Configure comparable searches and alerts on Indeed, Dice, Monster, and ZipRecruiter.
+
+The initial workflow and two-week source comparison are documented in [Job Discovery Workflow](JobSearchWorkflow.md). Track relevant results and reasons for mismatch before deciding which search filters, imports, or integrations to build.
+
+**Future acceptance criteria**
+
+- The user can run a small, consistent set of searches across selected sources.
+- Search results can be compared by relevant-posting yield, remote eligibility, technology, seniority, and application worthiness.
+- Any future intake integration uses a permitted, documented source and preserves provenance.
+- The system does not treat raw result volume or keyword presence as proof of fit.
+
 ## 5. Candidate profile requirements
 
 The future profile is user-controlled and should contain only information the user has reviewed and approved for job matching.
@@ -173,18 +197,25 @@ Latest recorded verification: the solution build succeeded and all 11 tests pass
 - Automated build, test, publish, database backup, service update, and health check.
 - SQLite backup, restore, and integrity verification utility.
 
-### Next — useful personal workflow
+### Current priority — improve job discovery (operational workflow)
 
-- Candidate profile and preferences.
-- Improved duplicate detection across different source URLs.
-- Basic deterministic filtering and prioritization.
-- Application status and follow-up tracking.
-- Simple actionable report/export.
+- Use Glassdoor recommendations as the current qualitative benchmark; review them manually.
+- Configure comparable searches and daily alerts on Indeed, Dice, Monster, and ZipRecruiter.
+- Use the target profile and four search families in [Job Discovery Workflow](JobSearchWorkflow.md).
+- Compare sources over an initial two-week period using relevant-posting yield and mismatch reasons.
+- Do not add application code merely to support this measurement; a simple manual tally is sufficient.
 
-### Later — reduce repetitive work
+### Next implementation candidates — selected from observed friction
 
-- Import from user-provided files or saved email alerts.
-- Optional local Ollama assessment with structured output and evidence.
+- Record source/provenance consistently.
+- Improve duplicate detection across different source URLs.
+- Add deterministic filtering once relevant posting fields can be captured reliably.
+- Import one useful, permitted alert/export format at a time.
+- Add application status and follow-up tracking when the workflow needs it.
+
+### Later
+
+- Optional local Ollama assessment with structured output and evidence, if review of real postings becomes a bottleneck.
 - Improved requirement extraction.
 - Additional legitimate source adapters where they provide clear value.
 

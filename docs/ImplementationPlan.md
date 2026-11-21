@@ -76,6 +76,21 @@ The deployed application runs as a Windows Service against the persistent `%Prog
 
 Do not deliberately break the live installation to test rollback. If rollback testing is pursued, use a disposable service installation and database.
 
+## Current priority — establish and measure job discovery (operational; no application code)
+
+Before choosing the next implementation increment, improve the actual opportunity-discovery process and collect a small amount of evidence.
+
+- Use Glassdoor recommendations as the current qualitative benchmark. They have so far appeared better matched for .NET, senior-level, and remote opportunities, but this has not yet been measured.
+- Configure comparable search families and daily alerts on Indeed, Dice, Monster, and ZipRecruiter.
+- Use the target profile, four search families, bounded review routine, and two-week source comparison in [Job Discovery Workflow](JobSearchWorkflow.md).
+- Compare relevant-posting yield and mismatch reasons, not just raw result counts.
+- Prefer employer career pages or ATS-hosted postings as the source when available.
+- Keep Glassdoor review manual. The closed HTTP retrieval experiment remains no-go for automated retrieval without express written authorization.
+
+Do not build a scraper, AI evaluator, reporting feature, or importer just to support this measurement. A simple manual tally is sufficient. The purpose is to identify the real bottleneck and select the next small application change from observed friction.
+
+**Exit condition:** A consistent search baseline is in use and an initial two-week comparison provides enough evidence to decide which discovery or intake improvement is worth implementing. This is an operational milestone, not a claim that application functionality has been delivered.
+
 ## Step 3 — Improve normalization and duplicate review
 
 - Normalize URL variations consistently.
@@ -117,11 +132,14 @@ Only proceed after capture, profile data, and deterministic behavior are dependa
 
 ## Step 7 — Add collection automation selectively
 
-- Review actual job-alert sources in use.
+Only consider this after the current job-discovery workflow has been measured. Use the actual alerts and sources that produce relevant opportunities, rather than selecting integrations speculatively.
+
+- Review actual job-alert sources in use, including the two-week source comparison.
 - Prefer supported APIs, RSS, email alerts, or user-provided exports.
 - Implement one source adapter at a time.
 - Track source provenance and failures.
 - Respect terms, rate limits, and access controls.
+- Glassdoor remains excluded from automated retrieval absent express written authorization.
 
 **Exit condition:** An integration demonstrably saves time or improves coverage enough to justify maintenance.
 
