@@ -50,7 +50,15 @@ The implemented workflow supports:
 8. Add and save comments on an opportunity.
 9. Delete an opportunity with an explicit confirmation step.
 
-AI evaluation, application tracking, dashboards, and automated application submission are not implemented. A separate Glassdoor HTTP-scraping experiment is being explored on `experiment/glassdoor-http-scraping`; it is not part of the deployed application.
+AI evaluation, application tracking, dashboards, and automated application submission are not implemented. The Glassdoor HTTP retrieval experiment on `experiment/glassdoor-http-scraping` is closed as a no-go for automated retrieval without express written authorization. A user-driven browser-extension popup or side panel is a possible future convenience for manual capture; it is not implemented.
+
+## Glassdoor capture boundary
+
+Do not implement Glassdoor scraping, browser automation, page-DOM extraction, automatic selected-text transfer, clipboard monitoring, challenge bypass, or cookie replay without express written authorization. The anonymous HTTP experiment received a Cloudflare managed challenge (HTTP 403), and the current Glassdoor terms require express written permission for automated scraping/mining.
+
+A possible future browser extension would keep the user on the Glassdoor tab and open a JobSearchAssistant capture popup or side panel. The conservative design reads only the active tab URL after an explicit user action; the user manually enters job details and submits a draft to a loopback-only intake endpoint for review. It does not read Glassdoor page content. Manual copy/paste may reduce context switching, but content reuse remains a separate terms question.
+
+This extension and intake endpoint are proposals only. See [Glassdoor HTTP Retrieval Experiment](docs/experiments/GlassdoorHttpScraping.md) for the evidence, terms research, and design boundaries.
 
 ## Build, test, and deployment
 
@@ -113,7 +121,7 @@ These results describe the recorded verification run; rerun the commands above a
 - [Requirements](docs/Requirements.md) — product needs, workflows, scope, and acceptance criteria.
 - [Architecture](docs/Architecture.md) — technical structure, persistence, hosting, backup, and deployment.
 - [Implementation Plan](docs/ImplementationPlan.md) — delivered increments, remaining work, and exit conditions.
-- [Glassdoor HTTP Scraping Experiment](docs/experiments/GlassdoorHttpScraping.md) — experimental scope, diagnostic workflow, and architectural decisions.
+- [Glassdoor HTTP Retrieval Experiment](docs/experiments/GlassdoorHttpScraping.md) — closed experiment evidence, terms decision, and browser-assisted manual-capture proposal.
 
 ## Guiding principles
 
