@@ -52,6 +52,10 @@ The implemented workflow supports:
 
 AI evaluation, application tracking, dashboards, and automated application submission are not implemented. The Glassdoor HTTP retrieval experiment on `experiment/glassdoor-http-scraping` is closed as a no-go for automated retrieval without express written authorization. A user-driven browser-extension popup or side panel is a possible future convenience for manual capture; it is not implemented.
 
+## Current job-search focus
+
+The immediate priority is improving the discovery of genuinely relevant opportunities, not adding AI evaluation or scraping. Glassdoor recommendations have so far appeared better matched for .NET, senior-level, and remote roles; this is a qualitative observation that still needs comparison against other sources. Use the documented search baseline and two-week source comparison in [Job Discovery Workflow](docs/JobSearchWorkflow.md). Keep Glassdoor review manual and respect the closed retrieval decision.
+
 ## Glassdoor capture boundary
 
 Do not implement Glassdoor scraping, browser automation, page-DOM extraction, automatic selected-text transfer, clipboard monitoring, challenge bypass, or cookie replay without express written authorization. The anonymous HTTP experiment received a Cloudflare managed challenge (HTTP 403), and the current Glassdoor terms require express written permission for automated scraping/mining.
@@ -121,6 +125,7 @@ These results describe the recorded verification run; rerun the commands above a
 - [Requirements](docs/Requirements.md) — product needs, workflows, scope, and acceptance criteria.
 - [Architecture](docs/Architecture.md) — technical structure, persistence, hosting, backup, and deployment.
 - [Implementation Plan](docs/ImplementationPlan.md) — delivered increments, remaining work, and exit conditions.
+- [Job Discovery Workflow](docs/JobSearchWorkflow.md) — target opportunity profile, search families, manual review routine, and source-comparison experiment.
 - [Glassdoor HTTP Retrieval Experiment](docs/experiments/GlassdoorHttpScraping.md) — closed experiment evidence, terms decision, and browser-assisted manual-capture proposal.
 
 ## Guiding principles
