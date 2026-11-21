@@ -50,7 +50,7 @@ The implemented workflow supports:
 8. Add and save comments on an opportunity.
 9. Delete an opportunity with an explicit confirmation step.
 
-AI evaluation, scraping, application tracking, dashboards, and automated application submission are not implemented.
+AI evaluation, application tracking, dashboards, and automated application submission are not implemented. A separate Glassdoor HTTP-scraping experiment is being explored on `experiment/glassdoor-http-scraping`; it is not part of the deployed application.
 
 ## Build, test, and deployment
 
@@ -113,6 +113,7 @@ These results describe the recorded verification run; rerun the commands above a
 - [Requirements](docs/Requirements.md) — product needs, workflows, scope, and acceptance criteria.
 - [Architecture](docs/Architecture.md) — technical structure, persistence, hosting, backup, and deployment.
 - [Implementation Plan](docs/ImplementationPlan.md) — delivered increments, remaining work, and exit conditions.
+- [Glassdoor HTTP Scraping Experiment](docs/experiments/GlassdoorHttpScraping.md) — experimental scope, diagnostic workflow, and architectural decisions.
 
 ## Guiding principles
 
