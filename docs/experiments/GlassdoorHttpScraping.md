@@ -1,6 +1,6 @@
 # Glassdoor HTTP Scraping Experiment
 
-**Status:** Investigation not yet started; no response captured and no extraction demonstrated  
+**Status:** Initial anonymous HTTP investigation completed; Cloudflare challenge blocks retrieval; no extraction demonstrated  
 **Branch:** `experiment/glassdoor-http-scraping`  
 **Target:** User-provided Glassdoor Recruiter job-view URL
 
@@ -84,8 +84,28 @@ If Glassdoor requires unsupported or prohibited access, or if retrieval is not r
 
 ## Current evidence
 
-- User confirms the URL displays in their normal browser.
-- Browser authentication may be cached.
-- A prior web fetch attempt could not retrieve the URL, but that result is not evidence that direct `HttpClient` requests are blocked.
-- No `curl.exe` response has been captured.
-- No implementation, build, or test has been performed for this experiment.
+The user confirms that the supplied URL displays in their normal browser. That browser may have an authenticated Glassdoor session; browser visibility does not establish that an independent HTTP client can retrieve the page.
+
+Two anonymous request paths have now been tested:
+
+1. A PowerShell command using `curl` invoked the PowerShell `Invoke-WebRequest` alias rather than native curl. Its response body was a Glassdoor security interstitial containing "Humans only" and "Enable JavaScript and cookies to continue", with Cloudflare managed-challenge markers.
+2. A subsequent request used native `curl.exe` with redirect following, response-header capture, and body capture. It returned:
+   - HTTP status: `403 Forbidden`
+   - Final URL: the requested Glassdoor Recruiter job-view URL (no redirect to another page was observed in the reported output).
+   - Content type: `text/html; charset=UTF-8`
+   - Response body size: 13,143 bytes.
+   - Headers included `Server: cloudflare` and `Cf-Mitigated: challenge`; a `CF-RAY` identifier was also present.
+   - HTML title: `Security | Glassdoor`.
+   - Cloudflare challenge markers were present; login markers were absent.
+
+The response is a Cloudflare challenge page, not the requested job posting and not an ordinary Glassdoor login page. A separate string check found job-listing-related terms in the HTML, but those terms can occur in challenge markup or embedded scripts and do not demonstrate that job data was returned.
+
+### Assessment
+
+- Anonymous retrieval of this URL is currently blocked by Cloudflare under the tested conditions, using both PowerShell's `Invoke-WebRequest` alias and native `curl.exe`.
+- This is evidence of an access challenge, not evidence that the URL is invalid or that the browser cannot display the job.
+- Authentication and automated-request access are separate concerns. We have not established whether the browser's authenticated session changes the response, nor whether an authorized integration or data-access route exists.
+- Do not attempt to evade or bypass Cloudflare challenges, CAPTCHA, or other access controls. Do not experiment with spoofed headers, browser fingerprinting, or copied browser cookies as a way to defeat the challenge.
+- Do not commit the raw response body, full test URL, public IP address, Cloudflare Ray ID, challenge tokens, cookies, or other request-specific artifacts. The diagnostic output shared during the investigation included identifying/request-specific values; they are intentionally omitted here.
+
+No application implementation, build, or test has been performed for this experiment. The next step is a scope decision: investigate an authorized Glassdoor data-access option or treat Glassdoor as a manual-capture source. Do not proceed to a Glassdoor `HttpClient` scraper unless a permitted, repeatable retrieval path is established.
