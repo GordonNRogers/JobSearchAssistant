@@ -78,8 +78,6 @@ Do not deliberately break the live installation to test rollback. If rollback te
 
 ## Step 3 — Improve normalization and duplicate review
 
-## Step 3 — Improve normalization and duplicate review
-
 - Normalize URL variations consistently.
 - Extract or accept employer, title, location, work arrangement, salary, and dates when available.
 - Identify likely duplicates across different URLs using conservative deterministic signals.
