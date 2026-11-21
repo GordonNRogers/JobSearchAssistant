@@ -106,14 +106,30 @@ Do not implement planned capabilities as though they already exist. Do not add c
 - Deterministic validation and explicit user constraints take precedence over AI suggestions.
 - AI output, if introduced, is untrusted input: validate schemas, retain evidence/provenance, distinguish unknowns from matches, and keep consequential decisions with the user.
 - Keep personal candidate data local by default. Do not upload resumes or profile data to external services without explicit user approval.
-- Do not store account passwords or automate logging into job sites.
+- Do not store account passwords or automate logging into job sites without a separately reviewed, explicit design. Treat session cookies and authentication artifacts as credentials.
 - Respect source-site terms, access controls, and rate limits.
 - Avoid paid APIs/cloud dependencies unless the benefit is demonstrated and the user agrees.
-- Do not introduce scraping frameworks, plugin systems, message brokers, microservices, Kubernetes, or frontend frameworks without a concrete requirement.
+- Do not introduce scraping frameworks, plugin systems, message brokers, microservices, Kubernetes, or frontend frameworks without a concrete requirement. The current isolated Glassdoor experiment may justify a small `IWebScraper` abstraction and site-specific implementation, but not a generalized scraping framework.
 - Do not mark plan items complete without implementation and verification evidence.
 - Do not claim a build, test, deployment, backup, restore, or health check succeeded unless it was actually run and its result observed.
 - Do not commit, push, merge, or deploy unless explicitly asked. When asked to do so, report exactly what was done and the resulting commit/branch.
 - Do not make unrelated changes or rewrite documentation wholesale when a focused correction is sufficient.
+
+## Current isolated experiment — Glassdoor HTTP retrieval
+
+The active experiment branch is `experiment/glassdoor-http-scraping` (created from the previous experiment branch after correcting the target site from ZipRecruiter to Glassdoor). Keep this work isolated from `main`.
+
+The user supplied a Glassdoor Recruiter job-view URL that displays in their normal browser; browser authentication may be cached, so this does not prove anonymous HTTP access.
+
+Agreed direction:
+
+- Use `curl.exe` in PowerShell to diagnose HTTP behavior: anonymous response, redirects/final URL, headers, content type, and HTML.
+- `curl.exe` is a diagnostic tool only. Any application implementation will use .NET `HttpClient`.
+- Design for site-specific retrieval strategies. Start with a small `IWebScraper` contract and an initial Glassdoor implementation if the HTTP investigation proves viable.
+- Keep session/authentication management separate from parsing. Cookie persistence, redirects, login, and session renewal are unresolved and must be driven by observed behavior.
+- Never expose or commit credentials, cookies, session identifiers, or authenticated response artifacts. Do not bypass challenges or access controls; respect site terms and rate limits.
+
+First action: perform an anonymous `curl.exe` request and inspect the response before designing or implementing authentication. No scraping implementation or successful extraction has been demonstrated yet. See `docs/experiments/GlassdoorHttpScraping.md` for the experiment record.
 
 ## Relationship to JobSearch2026
 
