@@ -123,7 +123,7 @@ Current operational priority: improve the quality and quantity of relevant oppor
 Initial search profile:
 
 - Primary technology: C#, .NET, and ASP.NET Core.
-- Seniority: senior developer and senior software engineer roles, including titles that do not explicitly mention .NET when C#/.NET is a primary technology.
+- Titles: search broadly across software engineering/development, .NET/C#, backend, application, systems, integration, API, and individual-contributor technical lead roles, including senior variants. Titles are discovery hints, not hard filters; assess the actual responsibilities and complete required/preferred skills list for substantive overlap with demonstrated experience.
 - Work arrangement: fully remote, with eligibility for a U.S.-based applicant confirmed in the posting.
 - Employment: full-time preferred; contract-to-hire acceptable; strictly contract is lower priority.
 - Relevant supporting technologies: SQL Server, Azure, APIs, backend services, messaging, and integration.
