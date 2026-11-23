@@ -86,7 +86,7 @@ The user approved a single **Export to JobSearch2026** action on the opportunity
 - Preserve original posting text exactly; include captured metadata and user comments; leave evaluation and application activity blank.
 - Publish to `GordonNRogers/JobSearch2026/01-JobSearch/Opportunities` through GitHub's Contents API, creating a commit on the configured branch (initially `main`).
 - Authenticate with a fine-grained PAT limited to that repository and Contents read/write permission.
-- Keep the Windows Service identity as `LocalService`. Store the token as a machine-scope DPAPI-protected file in `%ProgramData%\\JobSearchAssistant\\Secrets`, with ACL access restricted to LocalService and local Administrators.
+- Keep the Windows Service identity as `LocalService`. Store the token as a machine-scope DPAPI-protected file in `%ProgramData%\JobSearchAssistant\Secrets`, with ACL access restricted to LocalService and local Administrators.
 - Add a local secure token-provisioning step. Never place the plaintext token in source, appsettings, SQLite, environment variables, logs, command-line arguments, or ChatGPT.
 - Do not add Task Scheduler, impersonation, a PowerShell worker, local Git clone, or Git Credential Manager dependency.
 - Create new files only. Make retries safe by detecting an identical existing file; never overwrite a different existing record.
