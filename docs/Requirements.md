@@ -1,7 +1,7 @@
 # JobSearchAssistant Requirements
 
 **Status:** Local opportunity inbox implemented and deployed; additional job-search workflows remain planned
-**Last updated:** 2026-11-21
+**Last updated:** 2026-11-22
 **Primary objective:** Make a personal job search more efficient and better informed.
 
 ## 1. Problem statement
@@ -72,6 +72,27 @@ The user can inspect the original posting and maintain personal notes about it.
 - The user can save comments associated with an opportunity.
 - The user can delete an opportunity through an explicit confirmation workflow.
 - A nonexistent opportunity ID returns a not-found response.
+
+### WF-03 — Export and publish an opportunity to JobSearch2026 (approved; not implemented)
+
+From an opportunity detail page, the user can explicitly publish one captured opportunity as a Markdown record in the private `GordonNRogers/JobSearch2026` repository, under `01-JobSearch/Opportunities`.
+
+**Planned acceptance criteria**
+
+- An **Export to JobSearch2026** action is available for a saved opportunity.
+- The server loads the opportunity by ID; the browser cannot choose an arbitrary repository, branch, path, or GitHub API URL.
+- The generated Markdown follows the conceptual structure of the JobSearch2026 opportunity template.
+- Source URL, employer/title when captured, capture date, original posting text, and user comments are preserved. Original posting text is verbatim; evaluation and application sections remain blank.
+- Missing fields are omitted or marked unknown; no metadata is fabricated.
+- A safe filename follows the repository's `YYYY-MM-DD-Employer-Role.md` convention. Missing names and filename collisions are handled without overwriting another record.
+- Publishing uses a fine-grained PAT restricted to the JobSearch2026 repository, with Contents read/write permission and only required additional permissions.
+- The Windows Service reads the PAT from a DPAPI-protected file under `%ProgramData%\\JobSearchAssistant\\Secrets`, with an ACL limited to LocalService and local Administrators.
+- GitHub's Contents API creates the commit on the configured branch (initially `main`); no local Git credentials, clone, PowerShell worker, or Task Scheduler task is required.
+- A successful operation displays the published GitHub file URL and commit result.
+- A retry recognizes an identical existing file as already published and never silently overwrites different content.
+- Missing, invalid, expired, or insufficiently scoped credentials produce actionable errors without exposing the token.
+
+The design is approved, but the feature, token-provisioning mechanism, tests, and end-to-end publication are not implemented.
 
 ### WF-03 — Normalize and deduplicate
 
@@ -159,7 +180,7 @@ Do not infer sensitive personal characteristics or store confidential informatio
 - **Security:** Bind the production service to loopback; do not expose it to the LAN or internet.
 - **Maintainability:** Keep responsibilities separated without creating a distributed system.
 - **Cost:** No mandatory paid API or subscription for the current version.
-- **Security/privacy:** Do not store account passwords or automate login to job sites without a separately reviewed, explicit design. Treat browser-session cookies and other authentication artifacts as credentials; never log, commit, or store them in plaintext.
+- **Security/privacy:** Do not store account passwords or automate login to job sites without a separately reviewed, explicit design. Treat browser-session cookies and other authentication artifacts as credentials; never log, commit, or store them in plaintext. The approved GitHub publishing feature may store one narrowly scoped fine-grained PAT only as a DPAPI-protected file with restrictive filesystem ACLs; never place it in source control, appsettings, SQLite, logs, or command-line arguments.
 
 The deployment script creates and verifies a pre-deployment SQLite backup before updating an existing installation. The DatabaseTool restore operation requires the service and other database connections to be stopped. The combined deployment rollback path is implemented but has not yet been failure-injection-tested.
 
@@ -197,7 +218,7 @@ Latest recorded verification: the solution build succeeded and all 11 tests pass
 - Automated build, test, publish, database backup, service update, and health check.
 - SQLite backup, restore, and integrity verification utility.
 
-### Current priority — improve job discovery (operational workflow)
+### Approved next application increment — publish opportunity records to JobSearch2026 (not implemented)\n\nImplement the one-click publishing workflow described in WF-03 and `docs/Architecture.md`. This is a narrowly scoped export/publish capability, not application tracking or an AI evaluation feature.\n\n### Current priority — improve job discovery (operational workflow)
 
 - Use Glassdoor recommendations as the current qualitative benchmark; review them manually.
 - Configure comparable searches and daily alerts on Indeed, Dice, Monster, and ZipRecruiter.
