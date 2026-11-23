@@ -86,7 +86,7 @@ From an opportunity detail page, the user can explicitly publish one captured op
 - Missing fields are omitted or marked unknown; no metadata is fabricated.
 - A safe filename follows the repository's `YYYY-MM-DD-Employer-Role.md` convention. Missing names and filename collisions are handled without overwriting another record.
 - Publishing uses a fine-grained PAT restricted to the JobSearch2026 repository, with Contents read/write permission and only required additional permissions.
-- The Windows Service reads the PAT from a DPAPI-protected file under `%ProgramData%\\JobSearchAssistant\\Secrets`, with an ACL limited to LocalService and local Administrators.
+- The Windows Service reads the PAT from a DPAPI-protected file under `%ProgramData%\JobSearchAssistant\Secrets`, with an ACL limited to LocalService and local Administrators.
 - GitHub's Contents API creates the commit on the configured branch (initially `main`); no local Git credentials, clone, PowerShell worker, or Task Scheduler task is required.
 - A successful operation displays the published GitHub file URL and commit result.
 - A retry recognizes an identical existing file as already published and never silently overwrites different content.
@@ -218,7 +218,11 @@ Latest recorded verification: the solution build succeeded and all 11 tests pass
 - Automated build, test, publish, database backup, service update, and health check.
 - SQLite backup, restore, and integrity verification utility.
 
-### Approved next application increment — publish opportunity records to JobSearch2026 (not implemented)\n\nImplement the one-click publishing workflow described in WF-03 and `docs/Architecture.md`. This is a narrowly scoped export/publish capability, not application tracking or an AI evaluation feature.\n\n### Current priority — improve job discovery (operational workflow)
+### Approved next application increment — publish opportunity records to JobSearch2026 (not implemented)
+
+Implement the one-click publishing workflow described in WF-03 and `docs/Architecture.md`. This is a narrowly scoped export/publish capability, not application tracking or an AI evaluation feature.
+
+### Current priority — improve job discovery (operational workflow)
 
 - Use Glassdoor recommendations as the current qualitative benchmark; review them manually.
 - Configure comparable searches and daily alerts on Indeed, Dice, Monster, and ZipRecruiter.
