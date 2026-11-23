@@ -94,7 +94,7 @@ From an opportunity detail page, the user can explicitly publish one captured op
 
 The design is approved, but the feature, token-provisioning mechanism, tests, and end-to-end publication are not implemented.
 
-### WF-03 — Normalize and deduplicate
+### WF-04 — Normalize and deduplicate
 
 The initial implementation normalizes source URLs for duplicate comparison. Cross-URL similarity detection is future work.
 
@@ -111,7 +111,7 @@ The initial implementation normalizes source URLs for duplicate comparison. Cros
 - Distinct requisitions can be retained even when titles are similar.
 - Uncertain matches are surfaced for human review rather than destructively discarded.
 
-### WF-04 — Evaluate an opportunity
+### WF-05 — Evaluate an opportunity
 
 Future capability: compare a posting with a user-maintained candidate profile and stated job-search preferences.
 
@@ -125,19 +125,19 @@ Evaluation should distinguish explicit requirements from preferred qualification
 - Invalid AI output is rejected or marked for review.
 - The user can override an assessment and record a reason.
 
-### WF-05 — Prioritize opportunities
+### WF-06 — Prioritize opportunities
 
 Future capability: sort and filter opportunities by review status, fit assessment, location/work arrangement, compensation when known, capture date, and application status.
 
-### WF-06 — Track applications
+### WF-07 — Track applications
 
 Future capability: track application status, dates, notes, contacts, interviews, and follow-up actions separately from captured opportunities.
 
-### WF-07 — Produce a useful report
+### WF-08 — Produce a useful report
 
 Future capability: produce a concise report of newly captured opportunities, high-priority items, items needing review, active applications, and upcoming follow-ups.
 
-### WF-08 — Improve opportunity discovery
+### WF-09 — Improve opportunity discovery
 
 Current operational priority: improve the quality and quantity of relevant opportunities found before investing in automated collection or AI evaluation.
 
