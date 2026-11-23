@@ -1,7 +1,7 @@
 # JobSearchAssistant Architecture
 
 **Status:** Opportunity inbox deployed as a local Windows Service; database backup/restore is automated, but failure-triggered rollback remains untested
-**Last updated:** 2026-11-21
+**Last updated:** 2026-11-22
 
 ## 1. Architectural objective
 
@@ -169,7 +169,47 @@ The latest recorded operational verification also includes:
 
 These checks do not establish that the combined deployment rollback path has been failure-tested.
 
-## 10. Future capabilities and boundaries
+## 10. GitHub opportunity publishing (approved design; not implemented)
+
+### User workflow
+
+The opportunity detail page will expose an **Export to JobSearch2026** action. The application will generate one Markdown file and publish it directly to the configured branch of `GordonNRogers/JobSearch2026` in `01-JobSearch/Opportunities`. The GitHub Contents API creates the repository commit; the application does not need a local clone, Git executable, PowerShell worker, Task Scheduler task, or the user's interactive Git credentials. The initial target branch is `main` and should be configurable.
+
+The exported record must follow the conceptual structure of `01-JobSearch/Opportunities/_Opportunity-Template.md` in JobSearch2026:
+
+- Opportunity metadata populated only from fields JobSearchAssistant actually stores.
+- Original posting text copied verbatim and unmodified.
+- User comments copied into the notes section, clearly identified as user notes.
+- Evaluation and application-activity sections left blank/initial, because export is not evaluation or an application.
+- Unknown metadata omitted or marked unknown; never inferred or fabricated.
+
+Use the capture date and a filesystem-safe employer/role filename following `YYYY-MM-DD-Employer-Role.md`. Handle missing employer/title without inventing values. Resolve filename collisions deterministically, but never overwrite an existing record. If a retry finds the same path and identical content, report the existing record as already published; if the content differs, return a conflict for user resolution. A successful response includes the GitHub file URL and commit information.
+
+### GitHub authentication
+
+Use a fine-grained personal access token owned by the user and restricted to the single `JobSearch2026` repository. Grant Contents read/write; GitHub's required repository metadata read permission may also be present. Target an approximately one-year expiration, subject to the expiration options GitHub offers for the account. Do not request broader repository or organization permissions.
+
+The Windows Service continues to run as `LocalService`. Store the token as a DPAPI-protected file under `%ProgramData%\JobSearchAssistant\Secrets\github-pat.dpapi`, protected using `DataProtectionScope.LocalMachine`. Apply an explicit directory/file ACL granting access only to `NT AUTHORITY\LOCAL SERVICE` and local Administrators. Machine-scope DPAPI relies on the file ACL to restrict which local identities can obtain the ciphertext; do not treat DPAPI alone as the access boundary. A provisioning script/tool will prompt for the PAT securely, protect it, and write the file without putting the plaintext token in arguments, configuration, logs, or source control. The application decrypts it in memory when needed and must not log the token or authorization header. Do not store it in SQLite, appsettings, environment variables, or the repository.
+
+If the token is missing, unreadable, expired, or rejected, publishing fails with an actionable message that does not disclose the credential. Token replacement/renewal is an explicit local provisioning operation; do not silently request broader scopes.
+
+### API and commit behavior
+
+Use GitHub's HTTPS Contents API (`PUT /repos/{owner}/{repo}/contents/{path}`) to create the file on the configured branch. The PAT is sent only in the HTTPS authorization header. GitHub creates the commit; this is not a local `git add`/`commit`/`push` workflow. Do not accept arbitrary repository names, paths, branches, or API URLs from the browser request. Repository, target branch, and destination folder are server-side configuration/constants. The UI submits only the captured opportunity identifier; the server loads and validates the record.
+
+The endpoint is outbound-only to GitHub over HTTPS. The existing application remains bound to loopback (`127.0.0.1:5117`). Do not expose a generic GitHub proxy or arbitrary API caller. Restrict publishing to the fixed repository and folder. Use bounded HTTP timeouts, handle rate limits and transient failures, and distinguish authentication, permission, validation, network, and filename-conflict failures.
+
+Publishing is an explicit user action. It does not submit a job application, alter the original captured posting, or create an evaluation. Do not automatically retry an ambiguous write without first checking whether the file was created. A successful publication should show the GitHub file URL and commit result.
+
+### Operational boundaries
+
+- No Task Scheduler, impersonation, service-account Git setup, local Git clone, or PowerShell publishing worker is required.
+- No GitHub App or broad OAuth integration is required for this single-repository use case.
+- The token must be provisioned locally by the user; never ask the user to paste it into ChatGPT.
+- Deployment must preserve the secret directory and file. Normal application deployment must not overwrite or delete credentials.
+- The feature is not implemented or verified until code, tests, local provisioning, and an end-to-end publish/retry test have been completed.
+
+## 11. Future capabilities and boundaries
 
 Potential future workflows include candidate profile management, deterministic evaluation, optional local Ollama-assisted assessment, application tracking, reporting/export, permitted source adapters, and a user-driven browser capture companion.
 
@@ -177,7 +217,7 @@ Keep deterministic rules authoritative for explicit constraints and known data. 
 
 Do not add scraping frameworks, plugin discovery, event buses, distributed messaging, multi-agent orchestration, or remote services without a demonstrated requirement. The Glassdoor HTTP experiment is closed as a no-go for automated retrieval without express written authorization. It does not justify an IWebScraper, a Glassdoor scraper, or generalized scraping infrastructure.
 
-## 11. Optional browser capture companion (not implemented)
+## 12. Optional browser capture companion (not implemented)
 
 A browser extension may eventually reduce context switching without becoming a job-board scraper. The conservative design is a small popup or side panel that:
 
@@ -192,7 +232,7 @@ A user could manually copy selected text and paste it into an extension popup wh
 
 The extension and local intake API are future ideas only. No extension, endpoint, browser permission, or draft workflow is implemented. Before implementation, verify the browser extension's permission model, secure local-origin communication, request-forgery protections, and Glassdoor's applicable terms. Do not expose the local service beyond loopback.
 
-## 12. Decisions still deferred
+## 13. Decisions still deferred
 
 - Candidate profile and preference editing workflow.
 - Cross-URL similarity detection.

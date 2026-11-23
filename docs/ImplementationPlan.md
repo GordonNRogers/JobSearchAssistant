@@ -1,7 +1,7 @@
 # JobSearchAssistant Implementation Plan
 
 **Status:** Opportunity inbox implemented and deployed; database backup and rollback are implemented, with operational recovery validation still open
-**Last updated:** 2026-11-21
+**Last updated:** 2026-11-22
 
 ## Delivery rule
 
@@ -75,6 +75,37 @@ The deployed application runs as a Windows Service against the persistent `%Prog
 - Backup retention and cleanup policy has not been defined.
 
 Do not deliberately break the live installation to test rollback. If rollback testing is pursued, use a disposable service installation and database.
+
+## Approved next implementation increment — publish an opportunity to JobSearch2026 (not started)
+
+The user approved a single **Export to JobSearch2026** action on the opportunity detail page. This is a bounded feature, not a general GitHub integration platform.
+
+### Design
+
+- Generate one Markdown record using the conceptual structure in `JobSearch2026/01-JobSearch/Opportunities/_Opportunity-Template.md`.
+- Preserve original posting text exactly; include captured metadata and user comments; leave evaluation and application activity blank.
+- Publish to `GordonNRogers/JobSearch2026/01-JobSearch/Opportunities` through GitHub's Contents API, creating a commit on the configured branch (initially `main`).
+- Authenticate with a fine-grained PAT limited to that repository and Contents read/write permission.
+- Keep the Windows Service identity as `LocalService`. Store the token as a machine-scope DPAPI-protected file in `%ProgramData%\JobSearchAssistant\Secrets`, with ACL access restricted to LocalService and local Administrators.
+- Add a local secure token-provisioning step. Never place the plaintext token in source, appsettings, SQLite, environment variables, logs, command-line arguments, or ChatGPT.
+- Do not add Task Scheduler, impersonation, a PowerShell worker, local Git clone, or Git Credential Manager dependency.
+- Create new files only. Make retries safe by detecting an identical existing file; never overwrite a different existing record.
+- Return the GitHub file URL and commit result to the detail page.
+
+### Implementation sequence
+
+1. Confirm the JobSearch2026 template and destination path; define filename behavior for missing employer/title and collisions.
+2. Implement secure local PAT provisioning and service-readable DPAPI/ACL storage; ensure deployment preserves the secret directory.
+3. Implement a narrowly configured GitHub API client and typed publishing result/error handling.
+4. Implement deterministic Markdown rendering from `JobOpportunity`, preserving original text and avoiding fabricated metadata.
+5. Add the detail-page action and success/failure feedback.
+6. Test rendering, filename safety, duplicate/conflict behavior, credential failures, API failures, and an end-to-end publish/retry against the private repository.
+
+### Exit condition
+
+A captured opportunity can be published once to the intended repository path; the GitHub file contains the expected original source and metadata; the UI displays its URL; a repeated request does not duplicate or overwrite content; credentials remain protected; and automated tests plus a real end-to-end verification pass.
+
+This increment is approved but **not implemented**. Do not provision or request the PAT in chat; the user will create and install it locally when the provisioning workflow is ready.
 
 ## Current priority — establish and measure job discovery (operational; no application code)
 
