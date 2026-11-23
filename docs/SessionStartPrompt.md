@@ -99,6 +99,22 @@ The current implementation does **not** include AI evaluation, fit scoring, cand
 
 Do not implement planned capabilities as though they already exist. Do not add complexity merely because it appears on the roadmap.
 
+## Approved GitHub opportunity publishing design (not implemented)
+
+The user approved the next application increment: an **Export to JobSearch2026** action on the opportunity detail page. It will generate one Markdown record following the conceptual structure of `JobSearch2026/01-JobSearch/Opportunities/_Opportunity-Template.md` and publish it to `GordonNRogers/JobSearch2026/01-JobSearch/Opportunities` through GitHub's Contents API.
+
+Design constraints:
+- The Windows Service remains `LocalService`; no Task Scheduler, impersonation, PowerShell worker, local Git clone, or interactive Git credentials.
+- Use a fine-grained PAT restricted to the single JobSearch2026 repository with Contents read/write permission (plus only required metadata read access).
+- Store the PAT in a machine-scope DPAPI-protected file under `%ProgramData%\\JobSearchAssistant\\Secrets`, with filesystem ACL access limited to LocalService and local Administrators. DPAPI machine scope does not replace the ACL.
+- Provision the PAT locally; never ask the user to paste it into ChatGPT. Never store plaintext credentials in source, appsettings, SQLite, environment variables, logs, or command-line arguments.
+- Use the GitHub Contents API to create a commit on the configured target branch, initially `main`. This is a direct remote commit, not a local working-tree export followed by `git push`.
+- Preserve original posting text verbatim, include only captured metadata and user comments, and leave evaluation/application sections blank. Do not fabricate missing fields.
+- Never overwrite a different existing file. Treat an identical file on retry as already published and return its URL.
+- The feature and credential provisioning are design-only; no code, PAT, tests, or end-to-end publication exist yet.
+
+When implementing, inspect the current code and deployment script first. Ensure deployment preserves the secret directory. Validate the configured repository/path/branch server-side; the browser should submit only an opportunity ID. Do not claim implementation or verification until tests and a real publish/retry test are performed.
+
 ## Current job-search discovery baseline
 
 The user has so far found relatively few opportunities while prioritizing resume and profile setup. Glassdoor recommendations have appeared better matched than the other sources tried, particularly for .NET, senior-level, and remote positions. Treat this as a qualitative observation until the two-week source comparison is completed.
