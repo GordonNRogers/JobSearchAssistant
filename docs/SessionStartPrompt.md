@@ -106,7 +106,7 @@ The user approved the next application increment: an **Export to JobSearch2026**
 Design constraints:
 - The Windows Service remains `LocalService`; no Task Scheduler, impersonation, PowerShell worker, local Git clone, or interactive Git credentials.
 - Use a fine-grained PAT restricted to the single JobSearch2026 repository with Contents read/write permission (plus only required metadata read access).
-- Store the PAT in a machine-scope DPAPI-protected file under `%ProgramData%\\JobSearchAssistant\\Secrets`, with filesystem ACL access limited to LocalService and local Administrators. DPAPI machine scope does not replace the ACL.
+- Store the PAT in a machine-scope DPAPI-protected file under `%ProgramData%\JobSearchAssistant\Secrets`, with filesystem ACL access limited to LocalService and local Administrators. DPAPI machine scope does not replace the ACL.
 - Provision the PAT locally; never ask the user to paste it into ChatGPT. Never store plaintext credentials in source, appsettings, SQLite, environment variables, logs, or command-line arguments.
 - Use the GitHub Contents API to create a commit on the configured target branch, initially `main`. This is a direct remote commit, not a local working-tree export followed by `git push`.
 - Preserve original posting text verbatim, include only captured metadata and user comments, and leave evaluation/application sections blank. Do not fabricate missing fields.
