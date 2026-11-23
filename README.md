@@ -10,7 +10,7 @@ Use **JobSearchAssistant** when starting or describing a ChatGPT session for thi
 
 ## Project status
 
-**Usable local opportunity inbox deployed as a Windows Service.**
+**Usable local opportunity inbox deployed as a Windows Service.** The next approved increment is one-click publication of an opportunity record to the private JobSearch2026 repository; this publishing capability is designed but not implemented.
 
 The .NET 11 Razor Pages application supports manual opportunity capture, SQLite persistence through EF Core 11, a newest-first inbox, opportunity details, required-field validation, duplicate URL warnings with explicit save confirmation, user comments, and opportunity deletion.
 
@@ -50,7 +50,17 @@ The implemented workflow supports:
 8. Add and save comments on an opportunity.
 9. Delete an opportunity with an explicit confirmation step.
 
-AI evaluation, application tracking, dashboards, and automated application submission are not implemented. The Glassdoor HTTP retrieval experiment on `experiment/glassdoor-http-scraping` is closed as a no-go for automated retrieval without express written authorization. A user-driven browser-extension popup or side panel is a possible future convenience for manual capture; it is not implemented.
+GitHub opportunity publishing is planned but not implemented. AI evaluation, application tracking, dashboards, and automated application submission are not implemented. The Glassdoor HTTP retrieval experiment on `experiment/glassdoor-http-scraping` is closed as a no-go for automated retrieval without express written authorization. A user-driven browser-extension popup or side panel is a possible future convenience for manual capture; it is not implemented.
+
+## Planned opportunity publishing
+
+The approved next application increment is an **Export to JobSearch2026** action on an opportunity detail page. It will render one Markdown record using the structure in `JobSearch2026/01-JobSearch/Opportunities/_Opportunity-Template.md` and publish it directly to `GordonNRogers/JobSearch2026`, under `01-JobSearch/Opportunities`, through GitHub's Contents REST API.
+
+Authentication will use a fine-grained personal access token restricted to the `JobSearch2026` repository, with Contents read/write permission (and GitHub's required metadata read access). The Windows Service will read a DPAPI-protected token file under `%ProgramData%\\JobSearchAssistant\\Secrets`; the file and directory will be ACL-restricted to `NT AUTHORITY\\LOCAL SERVICE` and local Administrators. The token must never be stored in source control, `appsettings*.json`, the SQLite database, logs, or command-line arguments. A local provisioning step will prompt for the token and protect it with DPAPI machine scope; its implementation is part of the feature, not yet delivered.
+
+Publishing will create a GitHub commit on the configured target branch (initially `main`) and return the resulting file URL and commit status. This is a direct repository write, not a local working-tree export followed by `git push`. The operation will create new files only: it must not overwrite an existing opportunity record. Retries must detect an already-published identical file and report it as already present; a different file at the same path is a conflict requiring user attention. The generated record must preserve the original posting text exactly and leave evaluation/application sections blank. Fields not captured by JobSearchAssistant must remain explicitly unknown or omitted rather than invented.
+
+This is an approved design, not current functionality. No PAT has been provisioned, no GitHub API client has been implemented, and no publishing behavior has been tested.
 
 ## Current job-search focus
 
